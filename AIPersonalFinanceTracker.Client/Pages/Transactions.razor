@@ -1,0 +1,159 @@
+@page "/transactions"
+@using AIPersonalFinanceTracker.Shared.Models
+@using AIPersonalFinanceTracker.Client.Services
+@inject FinanceApiService ApiService
+
+<PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
+
+<h3>Transactions Management</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-warning" role="alert">
+        @errorMessage
+    </div>
+}
+
+<div class="card mb-4 p-3 shadow-sm">
+    <h5>Add New Transaction</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Description</label>
+            <input class="form-control" @bind="newTransaction.Description" @bind:event="oninput" @onblur="AutoPredictCategory" placeholder="e.g. Starbucks Coffee" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Amount ($)</label>
+            <input type="number" step="0.01" class="form-control" @bind="newTransaction.Amount" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Category</label>
+            <select class="form-select" @bind="newTransaction.CategoryId">
+                <option value="0">-- Select Category --</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat.Id">@cat.Name (@cat.Type)</option>
+                }
+            </select>
+            @if (!string.IsNullOrEmpty(predictedCategoryName))
+            {
+                <small class="text-success fw-bold d-block mt-1">AI Suggested: @predictedCategoryName</small>
+            }
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100" @onclick="SaveTransaction">Add</button>
+        </div>
+    </div>
+</div>
+
+<h5>Recent Transactions</h5>
+@if (transactions == null)
+{
+    <p><em>Loading transactions...</em></p>
+}
+else if (!transactions.Any())
+{
+    <p>No transactions recorded yet.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>AI Auto-Categorized</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in transactions)
+            {
+                <tr>
+                    <td>@item.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.Description</td>
+                    <td class="@(item.Category?.Type == "Income" ? "text-success fw-bold" : "text-danger fw-bold")">
+                        @(item.Category?.Type == "Income" ? "+" : "-")$@item.Amount.ToString("F2")
+                    </td>
+                    <td><span class="badge bg-secondary">@(item.Category?.Name ?? "Uncategorized")</span></td>
+                    <td>
+                        @if (item.IsAutoCategorized)
+                        {
+                            <span class="badge bg-success">Auto</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-dark">Manual</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Transaction> transactions = new();
+    private List<Category> categories = new();
+    private Transaction newTransaction = new();
+    private string predictedCategoryName = string.Empty;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+            categories = await ApiService.GetCategoriesAsync();
+            transactions = await ApiService.GetTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Unable to connect to the backend API. Please ensure the API is running and port 5000 is public.";
+        }
+    }
+
+    private async Task AutoPredictCategory()
+    {
+        if (!string.IsNullOrWhiteSpace(newTransaction.Description))
+        {
+            try
+            {
+                predictedCategoryName = await ApiService.PredictCategoryAsync(newTransaction.Description);
+                var matchedCategory = categories.FirstOrDefault(c => c.Name.Equals(predictedCategoryName, StringComparison.OrdinalIgnoreCase));
+                if (matchedCategory != null)
+                {
+                    newTransaction.CategoryId = matchedCategory.Id;
+                    newTransaction.IsAutoCategorized = true;
+                }
+            }
+            catch
+            {
+                // Silently handle prediction connection fallback
+            }
+        }
+    }
+
+    private async Task SaveTransaction()
+    {
+        if (newTransaction.CategoryId > 0 && newTransaction.Amount > 0)
+        {
+            try
+            {
+                await ApiService.CreateTransactionAsync(newTransaction);
+                newTransaction = new Transaction();
+                predictedCategoryName = string.Empty;
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Failed to save transaction: " + ex.Message;
+            }
+        }
+    }
+}
