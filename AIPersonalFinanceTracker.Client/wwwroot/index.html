@@ -10,18 +10,6 @@
     <link href="css/app.css" rel="stylesheet" />
     <link href="AIPersonalFinanceTracker.Client.styles.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-
-<body>
-    <div id="app">Loading...</div>
-
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-
-    <script src="_framework/blazor.webassembly.js"></script>
     <script>
         window.financeHelpers = {
             expenseChart: null,
@@ -32,6 +20,8 @@
                 if (this.expenseChart) {
                     this.expenseChart.destroy();
                 }
+
+                if (typeof Chart === 'undefined') return;
 
                 this.expenseChart = new Chart(ctx, {
                     type: 'doughnut',
@@ -53,7 +43,7 @@
             downloadFile: function (fileName, content) {
                 var blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
                 var link = document.createElement('a');
-                var url = URL.createObjectURL(blob);
+                var url = URL.CreateObjectURL(blob);
                 link.setAttribute('href', url);
                 link.setAttribute('download', fileName);
                 link.style.visibility = 'hidden';
@@ -63,6 +53,24 @@
             }
         };
     </script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="d-flex justify-content-center align-items-center vh-100">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading application...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
 </html>

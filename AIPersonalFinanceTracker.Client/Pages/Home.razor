@@ -161,6 +161,10 @@ else
             allTransactions = await ApiService.GetTransactionsAsync();
             ApplyFilter();
         }
+        catch
+        {
+            // Fallback gracefully
+        }
         finally
         {
             isLoading = false;
@@ -212,11 +216,18 @@ else
     {
         if (!isLoading && categorySpending.Any(c => c.Spent > 0))
         {
-            var activeExpenses = categorySpending.Where(c => c.Spent > 0).ToList();
-            var labels = activeExpenses.Select(c => c.CategoryName).ToArray();
-            var data = activeExpenses.Select(c => (double)c.Spent).ToArray();
+            try
+            {
+                var activeExpenses = categorySpending.Where(c => c.Spent > 0).ToList();
+                var labels = activeExpenses.Select(c => c.CategoryName).ToArray();
+                var data = activeExpenses.Select(c => (double)c.Spent).ToArray();
 
-            await JS.InvokeVoidAsync("financeHelpers.renderChart", "expenseChart", labels, data);
+                await JS.InvokeVoidAsync("financeHelpers.renderChart", "expenseChart", labels, data);
+            }
+            catch
+            {
+                // Prevent JS interop failure from breaking WASM execution
+            }
         }
     }
 
