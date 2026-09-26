@@ -1,7 +1,163 @@
-﻿@page "/"
+@page "/"
+@using AIPersonalFinanceTracker.Shared.Models
+@using AIPersonalFinanceTracker.Client.Services
+@inject FinanceApiService ApiService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard - AI Personal Finance Tracker</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Financial Summary Dashboard</h2>
+    <button class="btn btn-outline-primary btn-sm" @onclick="LoadData">
+        <i class="bi bi-arrow-clockwise"></i> Refresh Data
+    </button>
+</div>
 
-Welcome to your new app.
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <!-- KPI Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body p-3">
+                    <h6 class="card-title text-white-50 text-uppercase fw-bold">Total Net Balance</h6>
+                    <h3 class="mb-0">$@netBalance.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body p-3">
+                    <h6 class="card-title text-white-50 text-uppercase fw-bold">Total Income</h6>
+                    <h3 class="mb-0">+$@totalIncome.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-danger text-white">
+                <div class="card-body p-3">
+                    <h6 class="card-title text-white-50 text-uppercase fw-bold">Total Expenses</h6>
+                    <h3 class="mb-0">-$@totalExpenses.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Budget Breakdown & Analytics -->
+    <div class="row g-4">
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="mb-3">Expense Budget Limits & Spending</h5>
+                @if (!categorySpending.Any())
+                {
+                    <p class="text-muted">No expense categories recorded yet.</p>
+                }
+                else
+                {
+                    @foreach (var item in categorySpending)
+                    {
+                        var percentage = item.BudgetLimit > 0 ? Math.Min(100, (item.Spent / item.BudgetLimit) * 100) : 0;
+                        var progressClass = percentage > 90 ? "bg-danger" : percentage > 70 ? "bg-warning" : "bg-info";
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-bold">@item.CategoryName</span>
+                                <small class="text-muted">$@item.Spent.ToString("F2") / $@item.BudgetLimit.ToString("F2")</small>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar @progressClass" role="progressbar" style="width: @percentage.ToString("F0")%" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="mb-3">Quick AI Insights</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        Total Transactions
+                        <span class="badge bg-secondary rounded-pill">@transactions.Count</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        AI Auto-Categorized
+                        <span class="badge bg-success rounded-pill">@transactions.Count(t => t.IsAutoCategorized)</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        Top Expense Category
+                        <span class="badge bg-danger rounded-pill">@(topExpenseCategory ?? "N/A")</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Transaction> transactions = new();
+    private List<Category> categories = new();
+    private List<CategorySpendingModel> categorySpending = new();
+    private bool isLoading = true;
+
+    private decimal totalIncome => transactions.Where(t => t.Category?.Type == "Income").Sum(t => t.Amount);
+    private decimal totalExpenses => transactions.Where(t => t.Category?.Type == "Expense").Sum(t => t.Amount);
+    private decimal netBalance => totalIncome - totalExpenses;
+    private string? topExpenseCategory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            categories = await ApiService.GetCategoriesAsync();
+            transactions = await ApiService.GetTransactionsAsync();
+
+            CalculateAnalytics();
+        }
+        catch
+        {
+            // Handle error state gracefully
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CalculateAnalytics()
+    {
+        var expenseCategories = categories.Where(c => c.Type == "Expense").ToList();
+
+        categorySpending = expenseCategories.Select(c => new CategorySpendingModel
+        {
+            CategoryName = c.Name,
+            Spent = transactions.Where(t => t.CategoryId == c.Id).Sum(t => t.Amount),
+            BudgetLimit = c.MonthlyBudgetLimit
+        }).ToList();
+
+        topExpenseCategory = categorySpending
+            .OrderByDescending(c => c.Spent)
+            .FirstOrDefault(c => c.Spent > 0)?.CategoryName;
+    }
+
+    private class CategorySpendingModel
+    {
+        public string CategoryName { get; set; } = string.Empty;
+        public decimal Spent { get; set; }
+        public decimal BudgetLimit { get; set; }
+    }
+}

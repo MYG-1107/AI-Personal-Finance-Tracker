@@ -1,12 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "tXGk89CiPoM=",
+  "dgSpecHash": "G2CPMuc+iCE=",
   "success": true,
   "projectFilePath": "/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Api/AIPersonalFinanceTracker.Api.csproj",
   "expectedPackageFiles": [
     "/home/codespace/.nuget/packages/azure.core/1.50.0/azure.core.1.50.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/azure.identity/1.17.1/azure.identity.1.17.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.aspnetcore.components.webassembly/10.0.12/microsoft.aspnetcore.components.webassembly.10.0.12.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.aspnetcore.components.webassembly.server/10.0.12/microsoft.aspnetcore.components.webassembly.server.10.0.12.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.aspnetcore.openapi/10.0.12/microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.bcl.asyncinterfaces/9.0.4/microsoft.bcl.asyncinterfaces.9.0.4.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.build.framework/18.0.2/microsoft.build.framework.18.0.2.nupkg.sha512",
@@ -39,6 +41,7 @@
     "/home/codespace/.nuget/packages/microsoft.identitymodel.protocols/7.7.1/microsoft.identitymodel.protocols.7.7.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.identitymodel.protocols.openidconnect/7.7.1/microsoft.identitymodel.protocols.openidconnect.7.7.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.identitymodel.tokens/7.7.1/microsoft.identitymodel.tokens.7.7.1.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.jsinterop.webassembly/10.0.12/microsoft.jsinterop.webassembly.10.0.12.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.ml/5.0.0/microsoft.ml.5.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.ml.cpumath/5.0.0/microsoft.ml.cpumath.5.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/microsoft.ml.dataview/5.0.0/microsoft.ml.dataview.5.0.0.nupkg.sha512",

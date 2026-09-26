@@ -39,6 +39,39 @@
           "lib/net6.0/Humanizer.dll": {}
         }
       },
+      "Microsoft.AspNetCore.Components.WebAssembly/10.0.12": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.JSInterop.WebAssembly": "10.0.12"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.dll": {}
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.dll": {}
+        },
+        "build": {
+          "build/net10.0/_._": {}
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.12": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.12"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {}
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ],
+        "build": {
+          "build/Microsoft.AspNetCore.Components.WebAssembly.Server.targets": {}
+        }
+      },
       "Microsoft.AspNetCore.OpenApi/10.0.12": {
         "type": "package",
         "dependencies": {
@@ -770,6 +803,15 @@
           "lib/net8.0/Microsoft.IdentityModel.Tokens.dll": {}
         }
       },
+      "Microsoft.JSInterop.WebAssembly/10.0.12": {
+        "type": "package",
+        "compile": {
+          "lib/net10.0/Microsoft.JSInterop.WebAssembly.dll": {}
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.JSInterop.WebAssembly.dll": {}
+        }
+      },
       "Microsoft.ML/5.0.0": {
         "type": "package",
         "dependencies": {
@@ -1369,6 +1411,20 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
+      "AIPersonalFinanceTracker.Client/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "AIPersonalFinanceTracker.Shared": "1.0.0",
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.12"
+        },
+        "compile": {
+          "bin/placeholder/AIPersonalFinanceTracker.Client.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/AIPersonalFinanceTracker.Client.dll": {}
+        }
+      },
       "AIPersonalFinanceTracker.ML/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -1446,6 +1502,51 @@
         "lib/netstandard1.0/Humanizer.dll",
         "lib/netstandard2.0/Humanizer.dll",
         "logo.png"
+      ]
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly/10.0.12": {
+      "sha512": "/IEbzyCnW0t+1ZQcxcV3Aj65gus2ILsUaA8U0rnkSGRQbKlJxr/5YOifOLq0eLrM0m3kXEV/A3iEwrqT3tgwiw==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.components.webassembly/10.0.12",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.txt",
+        "build/net10.0/Microsoft.AspNetCore.Components.WebAssembly.props",
+        "build/net10.0/blazor.webassembly.js",
+        "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.dll",
+        "microsoft.aspnetcore.components.webassembly.10.0.12.nupkg.sha512",
+        "microsoft.aspnetcore.components.webassembly.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.12": {
+      "sha512": "G/+1rd0e/oUtEt8z08YSl5kbK1xzbYXN1AbhSmew9BK16yowT62agw/ty0EGFVlUT6zMqMRKTxEvDj8COmqebQ==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.components.webassembly.server/10.0.12",
+      "hasTools": true,
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.txt",
+        "build/Microsoft.AspNetCore.Components.WebAssembly.Server.targets",
+        "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll",
+        "microsoft.aspnetcore.components.webassembly.server.10.0.12.nupkg.sha512",
+        "microsoft.aspnetcore.components.webassembly.server.nuspec",
+        "tools/BlazorDebugProxy/BrowserDebugHost.dll",
+        "tools/BlazorDebugProxy/BrowserDebugHost.runtimeconfig.json",
+        "tools/BlazorDebugProxy/BrowserDebugProxy.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.CSharp.Scripting.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.CSharp.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.Scripting.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.dll",
+        "tools/BlazorDebugProxy/Microsoft.FileFormats.dll",
+        "tools/BlazorDebugProxy/Microsoft.NET.WebAssembly.Webcil.dll",
+        "tools/BlazorDebugProxy/Microsoft.SymbolStore.dll",
+        "tools/BlazorDebugProxy/Newtonsoft.Json.dll"
       ]
     },
     "Microsoft.AspNetCore.OpenApi/10.0.12": {
@@ -3216,6 +3317,20 @@
         "microsoft.identitymodel.tokens.nuspec"
       ]
     },
+    "Microsoft.JSInterop.WebAssembly/10.0.12": {
+      "sha512": "v8A9+3yOF6yD2nJzkDyINlkWxiB6ufCutO4Tgo3edn+CyI2WdstA8VzXy7sJrbtB+OaTfUZdaBET2JMMWuJyig==",
+      "type": "package",
+      "path": "microsoft.jsinterop.webassembly/10.0.12",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.txt",
+        "lib/net10.0/Microsoft.JSInterop.WebAssembly.dll",
+        "microsoft.jsinterop.webassembly.10.0.12.nupkg.sha512",
+        "microsoft.jsinterop.webassembly.nuspec"
+      ]
+    },
     "Microsoft.ML/5.0.0": {
       "sha512": "clHLX6bjcRpuHDRkXwkm/gSILifT0DOXXzgor4kBhjTkz5G419BCXhZ1xVk/GsMH6koqWwMONjQKzSSCSVZrIQ==",
       "type": "package",
@@ -3872,6 +3987,11 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "AIPersonalFinanceTracker.Client/1.0.0": {
+      "type": "project",
+      "path": "../AIPersonalFinanceTracker.Client/AIPersonalFinanceTracker.Client.csproj",
+      "msbuildProject": "../AIPersonalFinanceTracker.Client/AIPersonalFinanceTracker.Client.csproj"
+    },
     "AIPersonalFinanceTracker.ML/1.0.0": {
       "type": "project",
       "path": "../AIPersonalFinanceTracker.ML/AIPersonalFinanceTracker.ML.csproj",
@@ -3885,8 +4005,10 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
+      "AIPersonalFinanceTracker.Client >= 1.0.0",
       "AIPersonalFinanceTracker.ML >= 1.0.0",
       "AIPersonalFinanceTracker.Shared >= 1.0.0",
+      "Microsoft.AspNetCore.Components.WebAssembly.Server >= 10.0.12",
       "Microsoft.AspNetCore.OpenApi >= 10.0.12",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.12",
       "Microsoft.EntityFrameworkCore.SqlServer >= 10.0.12",
@@ -3920,6 +4042,9 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
+            "/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/AIPersonalFinanceTracker.Client.csproj": {
+              "projectPath": "/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/AIPersonalFinanceTracker.Client.csproj"
+            },
             "/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.ML/AIPersonalFinanceTracker.ML.csproj": {
               "projectPath": "/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.ML/AIPersonalFinanceTracker.ML.csproj"
             },
@@ -3946,6 +4071,10 @@
         "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly.Server": {
+            "target": "Package",
+            "version": "[10.0.12, )"
+          },
           "Microsoft.AspNetCore.OpenApi": {
             "target": "Package",
             "version": "[10.0.12, )"

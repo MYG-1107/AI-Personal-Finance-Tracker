@@ -1,7 +1,7 @@
-using AIPersonalFinanceTracker.Api.Data;
-using AIPersonalFinanceTracker.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AIPersonalFinanceTracker.Api.Data;
+using AIPersonalFinanceTracker.Shared.Models;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
 
@@ -20,21 +20,5 @@ public class CategoriesController : ControllerBase
     public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
     {
         return await _context.Categories.ToListAsync();
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Category>> GetCategory(int id)
-    {
-        var category = await _context.Categories.FindAsync(id);
-        if (category == null) return NotFound();
-        return category;
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Category>> CreateCategory(Category category)
-    {
-        _context.Categories.Add(category);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
     }
 }

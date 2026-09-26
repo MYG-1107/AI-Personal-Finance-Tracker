@@ -8,8 +8,10 @@
     ".NETCoreApp,Version=v10.0": {
       "AIPersonalFinanceTracker.Api/1.0.0": {
         "dependencies": {
+          "AIPersonalFinanceTracker.Client": "1.0.0",
           "AIPersonalFinanceTracker.ML": "1.0.0",
           "AIPersonalFinanceTracker.Shared": "1.0.0",
+          "Microsoft.AspNetCore.Components.WebAssembly.Server": "10.0.12",
           "Microsoft.AspNetCore.OpenApi": "10.0.12",
           "Microsoft.EntityFrameworkCore.Design": "10.0.12",
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.12",
@@ -51,6 +53,28 @@
           "lib/net6.0/Humanizer.dll": {
             "assemblyVersion": "2.14.0.0",
             "fileVersion": "2.14.1.48190"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly/10.0.12": {
+        "dependencies": {
+          "Microsoft.JSInterop.WebAssembly": "10.0.12"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.dll": {
+            "assemblyVersion": "10.0.12.0",
+            "fileVersion": "10.0.1226.42308"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.12": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.12"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {
+            "assemblyVersion": "10.0.12.0",
+            "fileVersion": "10.0.1226.42308"
           }
         }
       },
@@ -688,6 +712,14 @@
           }
         }
       },
+      "Microsoft.JSInterop.WebAssembly/10.0.12": {
+        "runtime": {
+          "lib/net10.0/Microsoft.JSInterop.WebAssembly.dll": {
+            "assemblyVersion": "10.0.12.0",
+            "fileVersion": "10.0.1226.42308"
+          }
+        }
+      },
       "Microsoft.ML/5.0.0": {
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
@@ -1161,6 +1193,18 @@
           }
         }
       },
+      "AIPersonalFinanceTracker.Client/1.0.0": {
+        "dependencies": {
+          "AIPersonalFinanceTracker.Shared": "1.0.0",
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.12"
+        },
+        "runtime": {
+          "AIPersonalFinanceTracker.Client.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "AIPersonalFinanceTracker.ML/1.0.0": {
         "dependencies": {
           "AIPersonalFinanceTracker.Shared": "1.0.0",
@@ -1212,6 +1256,20 @@
       "sha512": "sha512-lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "path": "humanizer.core/2.14.1",
       "hashPath": "humanizer.core.2.14.1.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly/10.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/IEbzyCnW0t+1ZQcxcV3Aj65gus2ILsUaA8U0rnkSGRQbKlJxr/5YOifOLq0eLrM0m3kXEV/A3iEwrqT3tgwiw==",
+      "path": "microsoft.aspnetcore.components.webassembly/10.0.12",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.10.0.12.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-G/+1rd0e/oUtEt8z08YSl5kbK1xzbYXN1AbhSmew9BK16yowT62agw/ty0EGFVlUT6zMqMRKTxEvDj8COmqebQ==",
+      "path": "microsoft.aspnetcore.components.webassembly.server/10.0.12",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.server.10.0.12.nupkg.sha512"
     },
     "Microsoft.AspNetCore.OpenApi/10.0.12": {
       "type": "package",
@@ -1416,6 +1474,13 @@
       "path": "microsoft.identitymodel.tokens/7.7.1",
       "hashPath": "microsoft.identitymodel.tokens.7.7.1.nupkg.sha512"
     },
+    "Microsoft.JSInterop.WebAssembly/10.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-v8A9+3yOF6yD2nJzkDyINlkWxiB6ufCutO4Tgo3edn+CyI2WdstA8VzXy7sJrbtB+OaTfUZdaBET2JMMWuJyig==",
+      "path": "microsoft.jsinterop.webassembly/10.0.12",
+      "hashPath": "microsoft.jsinterop.webassembly.10.0.12.nupkg.sha512"
+    },
     "Microsoft.ML/5.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1618,6 +1683,11 @@
       "sha512": "sha512-s8yUYuYYu+PAwvBdhLG1KyrGrk9gkYeuPxfAsXsTqqWyepwSyEw8hAaflW4nO98NG52YpYI1am2+9o+79h2RtQ==",
       "path": "system.security.cryptography.protecteddata/9.0.11",
       "hashPath": "system.security.cryptography.protecteddata.9.0.11.nupkg.sha512"
+    },
+    "AIPersonalFinanceTracker.Client/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "AIPersonalFinanceTracker.ML/1.0.0": {
       "type": "project",

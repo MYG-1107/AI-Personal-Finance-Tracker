@@ -30,7 +30,7 @@ public class FinanceApiService
 
     public async Task<string> PredictCategoryAsync(string description)
     {
-        var response = await _http.PostAsJsonAsync("/api/transactions/predict-category", description);
+        var response = await _http.PostAsJsonAsync("/api/transactions/predict-category", new { Description = description });
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<PredictionResult>();

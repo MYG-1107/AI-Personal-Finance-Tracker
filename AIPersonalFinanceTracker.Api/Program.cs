@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddControllers();
+// Add MVC services
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -16,18 +17,6 @@ builder.Services.AddSingleton<CategorizationService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add CORS service allowing Codespaces origins
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowCodespaces", policy =>
-    {
-        policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
-});
-
 var app = builder.Build();
 
 // Ensure database is created and seeded
@@ -37,21 +26,26 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
 }
 
-// Configure HTTP request pipeline
+// Configure HTTP pipeline
 if (app.Environment.IsDevelopment())
 {
+    app.UseWebAssemblyDebugging();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance Tracker API V1");
-        c.RoutePrefix = string.Empty;
+        c.RoutePrefix = "swagger"; // Keep Swagger at /swagger
     });
 }
 
-// Enable CORS
-app.UseCors("AllowCodespaces");
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
 
+app.UseRouting();
 app.UseAuthorization();
+
+app.MapRazorPages();
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();
