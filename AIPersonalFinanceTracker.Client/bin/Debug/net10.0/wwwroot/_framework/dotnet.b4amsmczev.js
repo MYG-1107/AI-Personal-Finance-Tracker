@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "AIPersonalFinanceTracker.Client",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-72tcUCncs0hqi1aR0nl4yuFzYTw58MzJCqXLnFSPR9w=",
+    "hash": "sha256-tKh09ha7K/45QfwRWPsz+ulSEomlCXe7zj9iLvu/rPE=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.b6l13xorvf.js"
@@ -1308,8 +1308,8 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "AIPersonalFinanceTracker.Shared.wasm",
-        "name": "AIPersonalFinanceTracker.Shared.vdp4ie0vjc.wasm",
-        "hash": "sha256-fZw9v/vWYsqU2x9Agv9whITBHc0ivmXEP0jU/hvIgYg=",
+        "name": "AIPersonalFinanceTracker.Shared.ug8igheeh3.wasm",
+        "hash": "sha256-orAMsezsRw3x0tKwkMNqFpUlVPV8+gmiapmTLHKS/TU=",
         "cache": "force-cache"
       },
       {
@@ -1320,22 +1320,22 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "AIPersonalFinanceTracker.Client.wasm",
-        "name": "AIPersonalFinanceTracker.Client.9siitcem73.wasm",
-        "hash": "sha256-mXxTDWKiPf0f8eis3HM5wdHhQKauxuwPSN0yBFq0nBs=",
+        "name": "AIPersonalFinanceTracker.Client.7r8xe2dcjv.wasm",
+        "hash": "sha256-k5Ahr5pCgV58ISWNo2a5mtcnuhvSozzGuYTB0LUwsp8=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "AIPersonalFinanceTracker.Shared.pdb",
-        "name": "AIPersonalFinanceTracker.Shared.hsfmhf8qei.pdb",
-        "hash": "sha256-j7nLygtI27mTW4qpZ4ncRxz1bVPGIil8HDmtIsgTcsU=",
+        "name": "AIPersonalFinanceTracker.Shared.h1tifhwkpn.pdb",
+        "hash": "sha256-e0kJwG7z7cChrOrW/Faw7h/g0TIClJzpM/EHA5TWjgg=",
         "cache": "force-cache"
       },
       {
         "virtualPath": "AIPersonalFinanceTracker.Client.pdb",
-        "name": "AIPersonalFinanceTracker.Client.3qoky3xk7u.pdb",
-        "hash": "sha256-1ecMRQ10837fAIHW2xSNbCgMpQHinrzV35OLgw1UeeQ=",
+        "name": "AIPersonalFinanceTracker.Client.mctw9r8a5o.pdb",
+        "hash": "sha256-aq4G6b1QpN3kEwJ5GOm05lOdBdwyyo1G3f5tOkN7iVU=",
         "cache": "force-cache"
       }
     ],

@@ -1,4 +1,8 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/AIPersonalFinanceTracker.Client.runtimeconfig.json
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.7r8xe2dcjv.wasm
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.mctw9r8a5o.pdb
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.h1tifhwkpn.pdb
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.ug8igheeh3.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/Microsoft.AspNetCore.Authorization.k17bz9ghvf.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/Microsoft.AspNetCore.Components.Forms.81edhczag4.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/Microsoft.AspNetCore.Components.Web.uj2fgye3s8.wasm
@@ -209,6 +213,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.gjriafnqmz.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/WindowsBase.8zsce9qxfb.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/blazor.webassembly.w3qd1tpl0e.js
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.b4amsmczev.js
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.js.map
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.native.b6l13xorvf.js
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.native.rw4kynp763.wasm
@@ -220,6 +225,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/mscorlib.8ptuc08eli.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/netstandard.eymp85mooh.wasm
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Threading.6pry74a050.wasm.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.h1tifhwkpn.pdb.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.runtime.js.map.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Diagnostics.Tools.roy5445ugj.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.native.b6l13xorvf.js.gz
@@ -286,6 +292,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/icudt_no_CJK.lfu7j35m59.dat.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Linq.Queryable.cvq43g1awj.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Web.np8uzzakvl.wasm.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.ug8igheeh3.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Xml.Linq.v9v8udncm1.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Threading.Thread.klaua2by9m.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Xml.ReaderWriter.a9mr08uzci.wasm.gz
@@ -296,6 +303,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Private.CoreLib.1vy46s12u6.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/Newtonsoft.Json.qkbufwhni2.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Runtime.Intrinsics.u0samjybfo.wasm.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.mctw9r8a5o.pdb.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Security.e83vvh6sl2.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.IO.FileSystem.o6jtz51fup.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Security.Principal.Windows.gpqua4rz29.wasm.gz
@@ -312,6 +320,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Net.WebHeaderCollection.326nl7s9g3.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Runtime.Extensions.i7gntui96b.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.IO.FileSystem.Watcher.z570derp0d.wasm.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.b4amsmczev.js.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Net.Http.cityx2bvcl.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Security.AccessControl.8yfnzmqzaq.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.ComponentModel.EventBasedAsync.hpvp6cf4de.wasm.gz
@@ -362,6 +371,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Threading.AccessControl.76zfdfy8go.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Security.Cryptography.OpenSsl.oa268u7i92.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.ComponentModel.Primitives.v7cajwpaqo.wasm.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.7r8xe2dcjv.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.Private.DataContractSerialization.ao8k9iu77a.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/System.ValueTuple.7ol6ljuhx8.wasm.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/Microsoft.AspNetCore.Components.WebAssembly.s7qzmsk17i.wasm.gz
@@ -901,6 +911,7 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/dotnet.js
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/epmep4j55k-{0}-vdkv1jewps-vdkv1jewps.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/fun3pdkxnk-{0}-nk9bgqz024-nk9bgqz024.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/ab8uctnyk5-{0}-dvltjuaoxb-dvltjuaoxb.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/q0j6in8a6k-{0}-bqjiyaj88i-bqjiyaj88i.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/d54j924rtz-{0}-c2jlpeoesf-c2jlpeoesf.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/xhgrujexa1-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -1167,7 +1178,12 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/istpcvrk1o-{0}-tjcz0u77k5-tjcz0u77k5.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/yskw2tfkkn-{0}-tptq2av103-tptq2av103.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/bo6l5r53gk-{0}-lfu7j35m59-lfu7j35m59.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/cb9vbpi6lr-{0}-ug8igheeh3-ug8igheeh3.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/0y7vfnca1z-{0}-h1tifhwkpn-h1tifhwkpn.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/mk3x9dex1f-{0}-vey3s5o343-vey3s5o343.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/oa21u3jukj-{0}-7r8xe2dcjv-7r8xe2dcjv.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/db9y3oyn36-{0}-mctw9r8a5o-mctw9r8a5o.gz
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/g2fntcs1qd-{0}-b4amsmczev-b4amsmczev.gz
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/staticwebassets.build.json
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/staticwebassets.build.json.cache
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/staticwebassets.development.json
@@ -1178,19 +1194,3 @@
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/refint/AIPersonalFinanceTracker.Client.dll
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/AIPersonalFinanceTracker.Client.pdb
 /workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/ref/AIPersonalFinanceTracker.Client.dll
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.3qoky3xk7u.pdb
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.9siitcem73.wasm
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.hsfmhf8qei.pdb
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.vdp4ie0vjc.wasm
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.jptohqusix.js
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.hsfmhf8qei.pdb.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Shared.vdp4ie0vjc.wasm.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.3qoky3xk7u.pdb.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.jptohqusix.js.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/bin/Debug/net10.0/wwwroot/_framework/AIPersonalFinanceTracker.Client.9siitcem73.wasm.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/ab8uctnyk5-{0}-dvltjuaoxb-dvltjuaoxb.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/cb9vbpi6lr-{0}-vdp4ie0vjc-vdp4ie0vjc.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/0y7vfnca1z-{0}-hsfmhf8qei-hsfmhf8qei.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/oa21u3jukj-{0}-9siitcem73-9siitcem73.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/db9y3oyn36-{0}-3qoky3xk7u-3qoky3xk7u.gz
-/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Client/obj/Debug/net10.0/compressed/g2fntcs1qd-{0}-jptohqusix-jptohqusix.gz

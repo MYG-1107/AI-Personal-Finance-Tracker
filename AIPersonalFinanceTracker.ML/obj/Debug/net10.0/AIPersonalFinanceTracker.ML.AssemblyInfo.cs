@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AIPersonalFinanceTracker.ML")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb3a7ad82969187dc1b1b3830f704bca0ff0ef53")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+075cdc3c07c352f3dc62a68e22314e30ad7b6687")]
 [assembly: System.Reflection.AssemblyProductAttribute("AIPersonalFinanceTracker.ML")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AIPersonalFinanceTracker.ML")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
