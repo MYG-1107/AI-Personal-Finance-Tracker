@@ -28,6 +28,12 @@ public class FinanceApiService
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<bool> CreateBulkTransactionsAsync(List<Transaction> transactions)
+    {
+        var response = await _http.PostAsJsonAsync("/api/transactions/bulk", transactions);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<string> PredictCategoryAsync(string description)
     {
         var response = await _http.PostAsJsonAsync("/api/transactions/predict-category", new { Description = description });

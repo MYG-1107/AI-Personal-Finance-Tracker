@@ -2,14 +2,23 @@
 @using AIPersonalFinanceTracker.Shared.Models
 @using AIPersonalFinanceTracker.Client.Services
 @inject FinanceApiService ApiService
+@inject IJSRuntime JS
 
 <PageTitle>Dashboard - AI Personal Finance Tracker</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Financial Summary Dashboard</h2>
-    <button class="btn btn-outline-primary btn-sm" @onclick="LoadData">
-        <i class="bi bi-arrow-clockwise"></i> Refresh Data
-    </button>
+    <div class="d-flex align-items-center gap-2">
+        <label class="fw-bold me-1">Filter:</label>
+        <select class="form-select form-select-sm w-auto" @bind="selectedFilter" @bind:after="OnFilterChanged">
+            <option value="All">All Time</option>
+            <option value="ThisMonth">This Month</option>
+            <option value="LastMonth">Last Month</option>
+        </select>
+        <button class="btn btn-outline-primary btn-sm ms-2" @onclick="LoadData">
+            Refresh
+        </button>
+    </div>
 </div>
 
 @if (isLoading)
@@ -50,14 +59,32 @@ else
         </div>
     </div>
 
-    <!-- Category Budget Breakdown & Analytics -->
-    <div class="row g-4">
+    <!-- Charts and Budget Analytics -->
+    <div class="row g-4 mb-4">
+        <!-- Visual Expense Chart -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm p-4 h-100">
+                <h5 class="mb-3 text-center">Expense Breakdown</h5>
+                @if (!categorySpending.Any(c => c.Spent > 0))
+                {
+                    <p class="text-muted text-center my-auto">No expense data for this period.</p>
+                }
+                else
+                {
+                    <div style="max-width: 320px; margin: 0 auto;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Expense Budget Limits -->
         <div class="col-md-7">
-            <div class="card border-0 shadow-sm p-4">
-                <h5 class="mb-3">Expense Budget Limits & Spending</h5>
+            <div class="card border-0 shadow-sm p-4 h-100">
+                <h5 class="mb-3">Expense Budget Limits</h5>
                 @if (!categorySpending.Any())
                 {
-                    <p class="text-muted">No expense categories recorded yet.</p>
+                    <p class="text-muted">No expense categories recorded.</p>
                 }
                 else
                 {
@@ -79,37 +106,44 @@ else
                 }
             </div>
         </div>
+    </div>
 
-        <div class="col-md-5">
-            <div class="card border-0 shadow-sm p-4">
-                <h5 class="mb-3">Quick AI Insights</h5>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        Total Transactions
-                        <span class="badge bg-secondary rounded-pill">@transactions.Count</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        AI Auto-Categorized
-                        <span class="badge bg-success rounded-pill">@transactions.Count(t => t.IsAutoCategorized)</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        Top Expense Category
-                        <span class="badge bg-danger rounded-pill">@(topExpenseCategory ?? "N/A")</span>
-                    </li>
-                </ul>
+    <!-- AI Insights -->
+    <div class="card border-0 shadow-sm p-4">
+        <h5 class="mb-3">Period AI Insights</h5>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                    <small class="text-muted d-block">Transactions Recorded</small>
+                    <span class="fs-4 fw-bold">@filteredTransactions.Count</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                    <small class="text-muted d-block">AI Auto-Categorized</small>
+                    <span class="fs-4 fw-bold text-success">@filteredTransactions.Count(t => t.IsAutoCategorized)</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                    <small class="text-muted d-block">Top Expense Category</small>
+                    <span class="fs-4 fw-bold text-danger">@(topExpenseCategory ?? "N/A")</span>
+                </div>
             </div>
         </div>
     </div>
 }
 
 @code {
-    private List<Transaction> transactions = new();
+    private List<Transaction> allTransactions = new();
+    private List<Transaction> filteredTransactions = new();
     private List<Category> categories = new();
     private List<CategorySpendingModel> categorySpending = new();
     private bool isLoading = true;
+    private string selectedFilter = "All";
 
-    private decimal totalIncome => transactions.Where(t => t.Category?.Type == "Income").Sum(t => t.Amount);
-    private decimal totalExpenses => transactions.Where(t => t.Category?.Type == "Expense").Sum(t => t.Amount);
+    private decimal totalIncome => filteredTransactions.Where(t => t.Category?.Type == "Income").Sum(t => t.Amount);
+    private decimal totalExpenses => filteredTransactions.Where(t => t.Category?.Type == "Expense").Sum(t => t.Amount);
     private decimal netBalance => totalIncome - totalExpenses;
     private string? topExpenseCategory;
 
@@ -124,18 +158,38 @@ else
         try
         {
             categories = await ApiService.GetCategoriesAsync();
-            transactions = await ApiService.GetTransactionsAsync();
-
-            CalculateAnalytics();
-        }
-        catch
-        {
-            // Handle error state gracefully
+            allTransactions = await ApiService.GetTransactionsAsync();
+            ApplyFilter();
         }
         finally
         {
             isLoading = false;
         }
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        var now = DateTime.UtcNow;
+        if (selectedFilter == "ThisMonth")
+        {
+            filteredTransactions = allTransactions.Where(t => t.Date.Month == now.Month && t.Date.Year == now.Year).ToList();
+        }
+        else if (selectedFilter == "LastMonth")
+        {
+            var lastMonth = now.AddMonths(-1);
+            filteredTransactions = allTransactions.Where(t => t.Date.Month == lastMonth.Month && t.Date.Year == lastMonth.Year).ToList();
+        }
+        else
+        {
+            filteredTransactions = allTransactions.ToList();
+        }
+
+        CalculateAnalytics();
     }
 
     private void CalculateAnalytics()
@@ -145,13 +199,25 @@ else
         categorySpending = expenseCategories.Select(c => new CategorySpendingModel
         {
             CategoryName = c.Name,
-            Spent = transactions.Where(t => t.CategoryId == c.Id).Sum(t => t.Amount),
+            Spent = filteredTransactions.Where(t => t.CategoryId == c.Id).Sum(t => t.Amount),
             BudgetLimit = c.MonthlyBudgetLimit
         }).ToList();
 
         topExpenseCategory = categorySpending
             .OrderByDescending(c => c.Spent)
             .FirstOrDefault(c => c.Spent > 0)?.CategoryName;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!isLoading && categorySpending.Any(c => c.Spent > 0))
+        {
+            var activeExpenses = categorySpending.Where(c => c.Spent > 0).ToList();
+            var labels = activeExpenses.Select(c => c.CategoryName).ToArray();
+            var data = activeExpenses.Select(c => (double)c.Spent).ToArray();
+
+            await JS.InvokeVoidAsync("financeHelpers.renderChart", "expenseChart", labels, data);
+        }
     }
 
     private class CategorySpendingModel

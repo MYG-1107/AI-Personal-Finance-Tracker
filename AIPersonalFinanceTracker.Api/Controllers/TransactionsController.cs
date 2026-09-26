@@ -33,10 +33,28 @@ public class TransactionsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Transaction>> PostTransaction(Transaction transaction)
     {
-        transaction.Date = DateTime.UtcNow;
+        if (transaction.Date == default)
+            transaction.Date = DateTime.UtcNow;
+
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
+    }
+
+    [HttpPost("bulk")]
+    public async Task<IActionResult> PostBulkTransactions([FromBody] List<Transaction> transactions)
+    {
+        if (transactions == null || !transactions.Any())
+            return BadRequest("No transactions provided.");
+
+        foreach (var t in transactions)
+        {
+            if (t.Date == default) t.Date = DateTime.UtcNow;
+            _context.Transactions.Add(t);
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { Count = transactions.Count });
     }
 
     [HttpPost("predict-category")]

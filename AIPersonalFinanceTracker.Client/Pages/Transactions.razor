@@ -1,16 +1,31 @@
 @page "/transactions"
+@using System.IO
+@using System.Text
 @using AIPersonalFinanceTracker.Shared.Models
 @using AIPersonalFinanceTracker.Client.Services
 @inject FinanceApiService ApiService
+@inject IJSRuntime JS
 
 <PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
 
-<h3>Transactions Management</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Transactions Management</h3>
+    <div class="d-flex gap-2">
+        <label class="btn btn-outline-success btn-sm mb-0">
+            <i class="bi bi-file-earmark-arrow-up"></i> Import CSV
+            <InputFile OnChange="HandleCsvUpload" accept=".csv" class="d-none" />
+        </label>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="ExportToCsv" disabled="@(!transactions.Any())">
+            <i class="bi bi-file-earmark-arrow-down"></i> Export CSV
+        </button>
+    </div>
+</div>
 
-@if (!string.IsNullOrEmpty(errorMessage))
+@if (!string.IsNullOrEmpty(statusMessage))
 {
-    <div class="alert alert-danger" role="alert">
-        <strong>Connection Error:</strong> @errorMessage
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @statusMessage
+        <button type="button" class="btn-close" @onclick="() => statusMessage = string.Empty"></button>
     </div>
 }
 
@@ -97,7 +112,7 @@ else
     private List<Category> categories = new();
     private Transaction newTransaction = new();
     private string predictedCategoryName = string.Empty;
-    private string errorMessage = string.Empty;
+    private string statusMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,13 +123,12 @@ else
     {
         try
         {
-            errorMessage = string.Empty;
             categories = await ApiService.GetCategoriesAsync();
             transactions = await ApiService.GetTransactionsAsync();
         }
         catch (Exception ex)
         {
-            errorMessage = $"{ex.GetType().Name}: {ex.Message}";
+            statusMessage = "Error loading data: " + ex.Message;
         }
     }
 
@@ -134,7 +148,7 @@ else
             }
             catch
             {
-                // Fallback silently if ML endpoint prediction fails
+                // Silent fallback
             }
         }
     }
@@ -148,12 +162,79 @@ else
                 await ApiService.CreateTransactionAsync(newTransaction);
                 newTransaction = new Transaction();
                 predictedCategoryName = string.Empty;
+                statusMessage = "Transaction added successfully!";
                 await LoadData();
             }
             catch (Exception ex)
             {
-                errorMessage = "Failed to save transaction: " + ex.Message;
+                statusMessage = "Failed to save transaction: " + ex.Message;
             }
+        }
+    }
+
+    private async Task ExportToCsv()
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Date,Description,Amount,Category,Type,IsAutoCategorized");
+
+        foreach (var t in transactions)
+        {
+            builder.AppendLine($"\"{t.Date:yyyy-MM-dd HH:mm}\",\"{t.Description}\",{t.Amount},\"{t.Category?.Name}\",\"{t.Category?.Type}\",{t.IsAutoCategorized}");
+        }
+
+        var fileName = $"transactions_export_{DateTime.Now:yyyyMMdd}.csv";
+        await JS.InvokeVoidAsync("financeHelpers.downloadFile", fileName, builder.ToString());
+        statusMessage = $"Exported {transactions.Count} transactions to {fileName}";
+    }
+
+    private async Task HandleCsvUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024);
+            using var reader = new StreamReader(stream);
+
+            var newTransactions = new List<Transaction>();
+            string? headerLine = await reader.ReadLineAsync();
+
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var parts = line.Split(',');
+                if (parts.Length >= 2)
+                {
+                    var description = parts[0].Trim('"').Trim();
+                    if (decimal.TryParse(parts[1].Trim(), out decimal amount))
+                    {
+                        var predictedCategory = await ApiService.PredictCategoryAsync(description);
+                        var category = categories.FirstOrDefault(c => c.Name.Equals(predictedCategory, StringComparison.OrdinalIgnoreCase))
+                                       ?? categories.FirstOrDefault();
+
+                        newTransactions.Add(new Transaction
+                        {
+                            Description = description,
+                            Amount = amount,
+                            CategoryId = category?.Id ?? 1,
+                            IsAutoCategorized = true,
+                            Date = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
+            if (newTransactions.Any())
+            {
+                await ApiService.CreateBulkTransactionsAsync(newTransactions);
+                statusMessage = $"Successfully imported {newTransactions.Count} transactions with AI auto-categorization!";
+                await LoadData();
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = "Error importing CSV: " + ex.Message;
         }
     }
 }
