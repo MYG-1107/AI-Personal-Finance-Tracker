@@ -14,23 +14,23 @@ public class FinanceApiService
 
     public async Task<List<Category>> GetCategoriesAsync()
     {
-        return await _http.GetFromJsonAsync<List<Category>>("api/categories") ?? new List<Category>();
+        return await _http.GetFromJsonAsync<List<Category>>("/api/categories") ?? new List<Category>();
     }
 
     public async Task<List<Transaction>> GetTransactionsAsync()
     {
-        return await _http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new List<Transaction>();
+        return await _http.GetFromJsonAsync<List<Transaction>>("/api/transactions") ?? new List<Transaction>();
     }
 
     public async Task<bool> CreateTransactionAsync(Transaction transaction)
     {
-        var response = await _http.PostAsJsonAsync("api/transactions", transaction);
+        var response = await _http.PostAsJsonAsync("/api/transactions", transaction);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<string> PredictCategoryAsync(string description)
     {
-        var response = await _http.PostAsJsonAsync("api/transactions/predict-category", description);
+        var response = await _http.PostAsJsonAsync("/api/transactions/predict-category", description);
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<PredictionResult>();

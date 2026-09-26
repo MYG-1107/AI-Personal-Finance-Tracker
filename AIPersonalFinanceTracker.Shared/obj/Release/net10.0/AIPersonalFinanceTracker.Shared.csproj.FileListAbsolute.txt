@@ -1,0 +1,13 @@
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/bin/Release/net10.0/AIPersonalFinanceTracker.Shared.deps.json
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/bin/Release/net10.0/AIPersonalFinanceTracker.Shared.dll
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/bin/Release/net10.0/AIPersonalFinanceTracker.Shared.pdb
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.csproj.AssemblyReference.cache
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.AssemblyInfoInputs.cache
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.AssemblyInfo.cs
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.csproj.CoreCompileInputs.cache
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.sourcelink.json
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.dll
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/refint/AIPersonalFinanceTracker.Shared.dll
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/AIPersonalFinanceTracker.Shared.pdb
+/workspaces/AI-Personal-Finance-Tracker/AIPersonalFinanceTracker.Shared/obj/Release/net10.0/ref/AIPersonalFinanceTracker.Shared.dll

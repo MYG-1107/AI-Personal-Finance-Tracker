@@ -14,6 +14,15 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure decimal precision
+        modelBuilder.Entity<Category>()
+            .Property(c => c.MonthlyBudgetLimit)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Transaction>()
+            .Property(t => t.Amount)
+            .HasPrecision(18, 2);
+
         // Seed default categories
         modelBuilder.Entity<Category>().HasData(
             new Category { Id = 1, Name = "Groceries", Type = "Expense", MonthlyBudgetLimit = 500 },

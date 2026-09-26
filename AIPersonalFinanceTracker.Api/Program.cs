@@ -12,17 +12,20 @@ builder.Services.AddSwaggerGen();
 // Register ML Categorization Service
 builder.Services.AddSingleton<CategorizationService>();
 
-// Register DbContext
+// Register DbContext with SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Enable CORS for Blazor WASM client
+// Add CORS service allowing Codespaces origins
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowClient", policy =>
-        policy.AllowAnyOrigin()
+    options.AddPolicy("AllowCodespaces", policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
@@ -38,11 +41,16 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance Tracker API V1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowClient");
+// Enable CORS
+app.UseCors("AllowCodespaces");
+
 app.UseAuthorization();
 app.MapControllers();
 
