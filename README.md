@@ -183,6 +183,3 @@ This project satisfies a 6-Phase Action Plan across the complete software develo
 
 
 
-
-📜 License
-This project is open-source and available under the MIT License.
