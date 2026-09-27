@@ -204,9 +204,6 @@ cd AI-Personal-Finance-Tracker
 # 2. Start container in detached mode
 docker compose up -d
 
-# 3. Verify health telemetry endpoint
-curl http://localhost:5000/health
-Open your browser and navigate to http://localhost:5000.
 
 
 📜 License
