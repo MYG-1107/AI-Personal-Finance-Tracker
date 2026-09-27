@@ -1,69 +1,61 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.ML;
 using AIPersonalFinanceTracker.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
-
-public class PredictionRequest
-{
-    public string Description { get; set; } = string.Empty;
-}
 
 [ApiController]
 [Route("api/[controller]")]
 public class TransactionsController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly CategorizationService _mlService;
+    private readonly CategorizationService _categorizationService;
 
-    public TransactionsController(AppDbContext context, CategorizationService mlService)
+    public TransactionsController(AppDbContext context, CategorizationService categorizationService)
     {
         _context = context;
-        _mlService = mlService;
+        _categorizationService = categorizationService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactions()
     {
-        return await _context.Transactions.Include(t => t.Category).ToListAsync();
+        return await _context.Transactions
+            .Include(t => t.Category)
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
     }
 
     [HttpPost]
     public async Task<ActionResult<Transaction>> PostTransaction(Transaction transaction)
     {
-        if (transaction.Date == default)
-            transaction.Date = DateTime.UtcNow;
+        if (transaction.CategoryId == null || transaction.CategoryId == 0)
+        {
+            var predictedCategory = _categorizationService.PredictCategory(transaction.Description);
+            var category = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == predictedCategory.ToLower());
+
+            if (category != null)
+            {
+                transaction.CategoryId = category.Id;
+                transaction.IsAutoCategorized = true;
+            }
+            else
+            {
+                transaction.CategoryId = null;
+            }
+        }
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
-    }
 
-    [HttpPost("bulk")]
-    public async Task<IActionResult> PostBulkTransactions([FromBody] List<Transaction> transactions)
-    {
-        if (transactions == null || !transactions.Any())
-            return BadRequest("No transactions provided.");
-
-        foreach (var t in transactions)
+        if (transaction.CategoryId.HasValue)
         {
-            if (t.Date == default) t.Date = DateTime.UtcNow;
-            _context.Transactions.Add(t);
+            await _context.Entry(transaction).Reference(t => t.Category).LoadAsync();
         }
 
-        await _context.SaveChangesAsync();
-        return Ok(new { Count = transactions.Count });
-    }
-
-    [HttpPost("predict-category")]
-    public ActionResult<object> PredictCategory([FromBody] PredictionRequest request)
-    {
-        if (request == null || string.IsNullOrWhiteSpace(request.Description))
-            return Ok(new { Category = "Uncategorized" });
-
-        var category = _mlService.PredictCategory(request.Description);
-        return Ok(new { Category = category });
+        return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
     }
 }
