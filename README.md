@@ -1,4 +1,3 @@
-cat << 'EOF' > README.md
 # 🤖 AI Personal Finance Tracker
 
 [![Framework](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
@@ -112,3 +111,111 @@ The application implements a **Decoupled Tiered Client-Server Architecture** run
 |    SQLite Database        |  |  ML.NET Categorization |
 |  (Local Data Storage)     |  |     Service Engine     |
 +---------------------------+  +------------------------+
+🔌 Implementation & How the API Connection Works
+How it is Implemented
+WebAssembly Client Execution: The Blazor WASM frontend runs client-side C# code compiled directly to WebAssembly instructions, offering near-native UI performance.
+
+REST API Interface: The backend exposes structured endpoints (/api/transactions, /api/categories, /health) handling business logic and ORM database operations.
+
+How the API Connection Works
+Injected HTTP Client: The Blazor WASM application utilizes an injected HttpClient (FinanceApiService) configured to hit relative API base paths.
+
+Asynchronous Serialization: Requests and responses use System.Text.Json non-blocking serialization methods (GetFromJsonAsync, PostAsJsonAsync, PutAsJsonAsync), keeping the browser UI thread fully responsive.
+
+Database Join Strategy:
+
+Transactions use a nullable foreign key (int? CategoryId).
+
+When queried via .Include(t => t.Category), Entity Framework Core translates this into a SQL LEFT OUTER JOIN.
+
+This guarantees that new or uncategorized transactions render without being dropped from search or display results.
+
+🔄 Data Pipeline & Human-in-the-Loop ML
+Plaintext
+
+
+[ CSV File Upload / Manual Form Input ]
+                   │
+                   ▼
+     [ Async MemoryStream Buffer ]
+                   │
+                   ▼
+     [ POST /api/transactions ]
+                   │
+                   ▼
+     [ ML.NET Text Featurization ]
+                   │
+                   ▼
+     [ EF Core SQLite Persistence ]
+                   │
+                   ▼
+     [ User UI Category Override ]
+                   │
+                   ▼
+     [ Real-Time ML Model Retrain ]
+                   │
+                   ▼
+[ Thread-Safe Model File Save (model.zip) ]
+Data Pipeline Sequence
+Stream Buffering: Uploaded CSV files pass through an asynchronous MemoryStream buffer before line parsing, eliminating browser freeze issues during large uploads.
+
+Feature Extraction & Inference: Uncategorized description strings are featurized into n-gram vectors and evaluated through the SdcaMaximumEntropy model to predict the merchant category.
+
+Thread-Safe Model Persistence (model.zip): When a user manually changes a transaction category, CategorizationService receives the user feedback, appends the pair (Description, NewCategory) to its training set, retrains the pipeline, and serializes model.zip to disk using a static thread lock (lock (_fileLock)).
+
+📋 Alignment with the 6-Phase Action Plan
+This project satisfies a 6-Phase Action Plan across the complete software development lifecycle:
+
+[x] Phase 1: Domain Modeling & Schema Design: Defined Transaction and Category entities with nullable foreign keys (int? CategoryId) and budget thresholds.
+
+[x] Phase 2: Core Infrastructure & REST API: Built ASP.NET Core API controllers, SQLite database contexts, and automatic database migration routines.
+
+[x] Phase 3: Embedded Machine Learning Engine: Implemented ML.NET text featurization and SdcaMaximumEntropy multiclass classification trainer.
+
+[x] Phase 4: Reactive Blazor WASM Frontend: Created a responsive UI featuring inline category edits, search filters, pagination, and non-blocking CSV file imports.
+
+[x] Phase 5: Human-in-the-Loop ML & Health Monitoring: Linked manual category overrides to automatic model retraining, model.zip disk persistence, budget limit alert banners, and a /health endpoint.
+
+[x] Phase 6: Quality Assurance & Containerized Deployment: Built a multi-stage Dockerfile, docker-compose.yml, and an xUnit unit/integration test suite achieving a 100% pass rate.
+
+🧪 Enterprise Quality & Testing Suite
+The repository includes a dedicated test project (AIPersonalFinanceTracker.Tests) powered by xUnit and EF Core In-Memory:
+
+Bash
+
+
+dotnet test
+Verified Test Suite Summary
+CategorizationServiceTests: Confirms ML text prediction accuracy for standard merchant descriptions (e.g., "Starbucks Coffee" ➔ "Dining Out").
+
+ML Model Retraining Test: Validates that calling LearnFromOverride() retrains the classification engine for custom transaction descriptions.
+
+TransactionsControllerTests: Tests API POST endpoints to confirm automated category assignment and IsAutoCategorized flagging.
+
+🚀 Quick Start & Docker Deployment
+Run via Docker Compose (Recommended)
+Bash
+
+
+# 1. Clone the repository
+git clone [https://github.com/MYG-1107/AI-Personal-Finance-Tracker.git](https://github.com/MYG-1107/AI-Personal-Finance-Tracker.git)
+cd AI-Personal-Finance-Tracker
+
+# 2. Start container in detached mode
+docker compose up -d
+
+# 3. Verify health telemetry endpoint
+curl http://localhost:5000/health
+Open your browser and navigate to http://localhost:5000.
+
+Local CLI Commands
+Bash
+
+
+# Execute automated test suite
+dotnet test
+
+# Run API and WebAssembly host locally
+dotnet run --project AIPersonalFinanceTracker.Api/AIPersonalFinanceTracker.Api.csproj
+📜 License
+This project is open-source and available under the MIT License.
