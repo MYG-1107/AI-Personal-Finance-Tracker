@@ -12,41 +12,29 @@ public class FinanceApiService
         _http = http;
     }
 
-    public async Task<List<Category>> GetCategoriesAsync()
-    {
-        return await _http.GetFromJsonAsync<List<Category>>("/api/categories") ?? new List<Category>();
-    }
-
     public async Task<List<Transaction>> GetTransactionsAsync()
     {
-        return await _http.GetFromJsonAsync<List<Transaction>>("/api/transactions") ?? new List<Transaction>();
+        return await _http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new();
     }
 
-    public async Task<bool> CreateTransactionAsync(Transaction transaction)
+    public async Task<List<Category>> GetCategoriesAsync()
     {
-        var response = await _http.PostAsJsonAsync("/api/transactions", transaction);
-        return response.IsSuccessStatusCode;
+        return await _http.GetFromJsonAsync<List<Category>>("api/categories") ?? new();
     }
 
-    public async Task<bool> CreateBulkTransactionsAsync(List<Transaction> transactions)
+    public async Task<Transaction?> CreateTransactionAsync(Transaction transaction)
     {
-        var response = await _http.PostAsJsonAsync("/api/transactions/bulk", transactions);
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<string> PredictCategoryAsync(string description)
-    {
-        var response = await _http.PostAsJsonAsync("/api/transactions/predict-category", new { Description = description });
+        var response = await _http.PostAsJsonAsync("api/transactions", transaction);
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<PredictionResult>();
-            return result?.Category ?? "Uncategorized";
+            return await response.Content.ReadFromJsonAsync<Transaction>();
         }
-        return "Uncategorized";
+        return null;
     }
 
-    private class PredictionResult
+    public async Task<bool> UpdateTransactionCategoryAsync(int transactionId, int categoryId)
     {
-        public string Category { get; set; } = string.Empty;
+        var response = await _http.PutAsJsonAsync($"api/transactions/{transactionId}/category", new { CategoryId = categoryId });
+        return response.IsSuccessStatusCode;
     }
 }

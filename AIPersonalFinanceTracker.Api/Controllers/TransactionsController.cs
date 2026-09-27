@@ -58,4 +58,19 @@ public class TransactionsController : ControllerBase
 
         return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
     }
+
+    [HttpPut("{id}/category")]
+    public async Task<IActionResult> UpdateTransactionCategory(int id, [FromBody] CategoryOverrideDto dto)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null) return NotFound();
+
+        transaction.CategoryId = dto.CategoryId > 0 ? dto.CategoryId : null;
+        transaction.IsAutoCategorized = false; // Mark auto badge false when human overrides
+        
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
+
+public record CategoryOverrideDto(int CategoryId);

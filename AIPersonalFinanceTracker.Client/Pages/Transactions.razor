@@ -76,9 +76,25 @@
     </EditForm>
 </div>
 
-<!-- Recent Transactions Table -->
+<!-- Transactions Table with Search & Pagination -->
 <div class="card border-0 shadow-sm p-4">
-    <h5 class="mb-3">Recent Transactions</h5>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h5 class="mb-0">Recent Transactions (@FilteredTransactions.Count)</h5>
+        
+        <!-- Search & Filter Bar -->
+        <div class="d-flex gap-2">
+            <input type="text" class="form-control form-control-sm" placeholder="Search description..."
+                   @bind="searchTerm" @bind:event="oninput" style="width: 200px;" />
+            <select class="form-select form-select-sm" @bind="filterCategoryId" style="width: 180px;">
+                <option value="0">All Categories</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat.Id">@cat.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
     @if (isLoading)
     {
         <div class="d-flex justify-content-center my-4">
@@ -87,9 +103,9 @@
             </div>
         </div>
     }
-    else if (!transactions.Any())
+    else if (!FilteredTransactions.Any())
     {
-        <p class="text-muted">No transactions recorded yet.</p>
+        <p class="text-muted">No matching transactions found.</p>
     }
     else
     {
@@ -100,12 +116,12 @@
                         <th>Date</th>
                         <th>Description</th>
                         <th>Amount</th>
-                        <th>Category</th>
+                        <th style="min-width: 180px;">Category (Click to Edit)</th>
                         <th>AI Auto-Categorized</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in transactions)
+                    @foreach (var item in PaginatedTransactions)
                     {
                         var isIncome = item.Category?.Type == "Income";
                         var amountColor = isIncome ? "text-success" : "text-danger";
@@ -116,12 +132,25 @@
                             <td class="fw-semibold">@item.Description</td>
                             <td class="@amountColor fw-bold">@amountPrefix$@item.Amount.ToString("F2")</td>
                             <td>
-                                <span class="badge bg-secondary">@(item.Category?.Name ?? "Uncategorized")</span>
+                                <!-- Interactive Category Selector for User Overrides -->
+                                <select class="form-select form-select-sm border-0 bg-light"
+                                        value="@(item.CategoryId ?? 0)"
+                                        @onchange="@(e => OnCategoryOverride(item, e))">
+                                    <option value="0">Uncategorized</option>
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                </select>
                             </td>
                             <td>
                                 @if (item.IsAutoCategorized)
                                 {
                                     <span class="badge bg-success">Auto</span>
+                                }
+                                else if (item.CategoryId.HasValue)
+                                {
+                                    <span class="badge bg-info text-dark">User Set</span>
                                 }
                             </td>
                         </tr>
@@ -129,6 +158,29 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination Controls -->
+        @if (TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="text-muted small">Page @currentPage of @TotalPages</span>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</button>
+                    </li>
+                    @for (int p = 1; p <= TotalPages; p++)
+                    {
+                        var pageNum = p;
+                        <li class="page-item @(currentPage == pageNum ? "active" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(pageNum)">@pageNum</button>
+                        </li>
+                    }
+                    <li class="page-item @(currentPage == TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                    </li>
+                </ul>
+            </div>
+        }
     }
 </div>
 
@@ -141,6 +193,12 @@
     private bool isSubmitting = false;
     private string? statusMessage;
     private string? errorMessage;
+
+    // Search and Pagination fields
+    private string searchTerm = string.Empty;
+    private int filterCategoryId = 0;
+    private int currentPage = 1;
+    private int pageSize = 5;
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,6 +220,43 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private List<Transaction> FilteredTransactions => transactions
+        .Where(t => string.IsNullOrWhiteSpace(searchTerm) || t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        .Where(t => filterCategoryId == 0 || t.CategoryId == filterCategoryId)
+        .ToList();
+
+    private List<Transaction> PaginatedTransactions => FilteredTransactions
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+
+    private int TotalPages => (int)Math.Ceiling((double)FilteredTransactions.Count / pageSize);
+
+    private void ChangePage(int newPage)
+    {
+        if (newPage >= 1 && newPage <= TotalPages)
+        {
+            currentPage = newPage;
+        }
+    }
+
+    private async Task OnCategoryOverride(Transaction item, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newCatId))
+        {
+            bool success = await ApiService.UpdateTransactionCategoryAsync(item.Id, newCatId);
+            if (success)
+            {
+                statusMessage = $"Category updated for '{item.Description}'!";
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "Failed to update category.";
+            }
         }
     }
 
