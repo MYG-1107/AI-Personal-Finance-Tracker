@@ -192,17 +192,6 @@ ML Model Retraining Test: Validates that calling LearnFromOverride() retrains th
 
 TransactionsControllerTests: Tests API POST endpoints to confirm automated category assignment and IsAutoCategorized flagging.
 
-🚀 Quick Start & Docker Deployment
-Run via Docker Compose (Recommended)
-Bash
-
-
-# 1. Clone the repository
-git clone [https://github.com/MYG-1107/AI-Personal-Finance-Tracker.git](https://github.com/MYG-1107/AI-Personal-Finance-Tracker.git)
-cd AI-Personal-Finance-Tracker
-
-# 2. Start container in detached mode
-docker compose up -d
 
 
 
