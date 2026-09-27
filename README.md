@@ -51,6 +51,7 @@ An enterprise-grade, privacy-first personal finance application built with **.NE
 
 Developed by:
 
-Puppireddy Vishwateja - System Architecture Designer <br>
+Puppireddy Vishwateja - System Architect <br>
 Padakanti Sairam - Backend Developer <br>
 Mallarapu Yaswanth - ML and Principle Engineer
+Apple 
