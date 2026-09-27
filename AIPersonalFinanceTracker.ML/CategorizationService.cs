@@ -22,14 +22,17 @@ public class CategoryPrediction
 
 public class CategorizationService
 {
+    private static readonly object _fileLock = new();
     private readonly MLContext _mlContext;
     private ITransformer? _model;
     private PredictionEngine<TransactionData, CategoryPrediction>? _predictionEngine;
     private readonly List<TransactionData> _trainingData;
+    private readonly string _modelPath;
 
-    public CategorizationService()
+    public CategorizationService(string? customModelPath = null)
     {
         _mlContext = new MLContext(seed: 0);
+        _modelPath = customModelPath ?? Path.Combine(AppContext.BaseDirectory, "model.zip");
 
         _trainingData = new List<TransactionData>
         {
@@ -51,10 +54,33 @@ public class CategorizationService
             new() { Description = "Freelance Consulting Payout", Category = "Freelance" }
         };
 
-        TrainModel();
+        InitializeModel();
     }
 
-    private void TrainModel()
+    private void InitializeModel()
+    {
+        lock (_fileLock)
+        {
+            if (File.Exists(_modelPath))
+            {
+                try
+                {
+                    DataViewSchema modelSchema;
+                    _model = _mlContext.Model.Load(_modelPath, out modelSchema);
+                    _predictionEngine = _mlContext.Model.CreatePredictionEngine<TransactionData, CategoryPrediction>(_model);
+                    return;
+                }
+                catch
+                {
+                    // Fallback to training if file access or schema fails
+                }
+            }
+
+            TrainAndSaveModelInternal();
+        }
+    }
+
+    private void TrainAndSaveModelInternal()
     {
         var dataView = _mlContext.Data.LoadFromEnumerable(_trainingData);
 
@@ -65,23 +91,37 @@ public class CategorizationService
 
         _model = pipeline.Fit(dataView);
         _predictionEngine = _mlContext.Model.CreatePredictionEngine<TransactionData, CategoryPrediction>(_model);
+
+        try
+        {
+            _mlContext.Model.Save(_model, dataView.Schema, _modelPath);
+        }
+        catch (IOException)
+        {
+            // Silently handle race conditions during concurrent test teardowns
+        }
     }
 
     public string PredictCategory(string description)
     {
-        if (_predictionEngine == null || string.IsNullOrWhiteSpace(description))
-            return "Uncategorized";
+        lock (_fileLock)
+        {
+            if (_predictionEngine == null || string.IsNullOrWhiteSpace(description))
+                return "Uncategorized";
 
-        var prediction = _predictionEngine.Predict(new TransactionData { Description = description });
-        return string.IsNullOrEmpty(prediction.PredictedCategory) ? "Uncategorized" : prediction.PredictedCategory;
+            var prediction = _predictionEngine.Predict(new TransactionData { Description = description });
+            return string.IsNullOrEmpty(prediction.PredictedCategory) ? "Uncategorized" : prediction.PredictedCategory;
+        }
     }
 
     public void LearnFromOverride(string description, string newCategory)
     {
         if (string.IsNullOrWhiteSpace(description) || string.IsNullOrWhiteSpace(newCategory)) return;
 
-        // Append feedback example and retrain model pipeline
-        _trainingData.Add(new TransactionData { Description = description, Category = newCategory });
-        TrainModel();
+        lock (_fileLock)
+        {
+            _trainingData.Add(new TransactionData { Description = description, Category = newCategory });
+            TrainAndSaveModelInternal();
+        }
     }
 }

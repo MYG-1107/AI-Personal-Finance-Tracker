@@ -3,4 +3,5 @@
   <Project Path="AIPersonalFinanceTracker.Client/AIPersonalFinanceTracker.Client.csproj" />
   <Project Path="AIPersonalFinanceTracker.ML/AIPersonalFinanceTracker.ML.csproj" />
   <Project Path="AIPersonalFinanceTracker.Shared/AIPersonalFinanceTracker.Shared.csproj" />
+  <Project Path="AIPersonalFinanceTracker.Tests/AIPersonalFinanceTracker.Tests.csproj" />
 </Solution>
