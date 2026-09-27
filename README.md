@@ -88,29 +88,30 @@ While budgeting apps and spreadsheets exist, traditional market offerings fail t
 
 The application implements a **Decoupled Tiered Client-Server Architecture** running inside a containerized host environment.
 
-```text
 +-------------------------------------------------------+
 |             Blazor WASM Client (Browser)              |
 |   - Single-Page Application (SPA)                     |
 |   - Direct Mono/WASM C# Execution                     |
 +---------------------------+---------------------------+
-                            |
-                 Async HTTP Requests (HttpClient)
-                            |
-                            v
+|
+Async HTTP Requests (HttpClient)
+|
+v
 +---------------------------+---------------------------+
 |              ASP.NET Core Web API                     |
 |   - RESTful Controllers                               |
 |   - Health Monitoring Endpoint (/health)             |
 +-------------+---------------------------+-------------+
-              |                           |
-    EF Core SQL Queries          Invoke ML Predict/Retrain
-              |                           |
-              v                           v
+|                           |
+EF Core SQL Queries          Invoke ML Predict/Retrain
+|                           |
+v                           v
 +-------------+-------------+  +----------+-------------+
 |    SQLite Database        |  |  ML.NET Categorization |
 |  (Local Data Storage)     |  |     Service Engine     |
 +---------------------------+  +------------------------+
+
+
 ---
 
 ## 🔌 Implementation & How the API Connection Works
