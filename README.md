@@ -1,4 +1,4 @@
-# 🤖 AI Personal Finance Tracker
+# AI Personal Finance Tracker
 
 [![Framework](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Frontend](https://img.shields.io/badge/Blazor-WASM-512BD4?logo=blazor)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
