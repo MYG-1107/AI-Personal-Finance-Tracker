@@ -15,7 +15,9 @@
             Import CSV
             <InputFile OnChange="HandleCsvUpload" accept=".csv" class="d-none" />
         </label>
-        <button class="btn btn-outline-secondary" @onclick="ExportCsv">Export CSV</button>
+        <button class="btn btn-outline-secondary" @onclick="ExportCsv">
+            Export (@FilteredTransactions.Count) CSV
+        </button>
     </div>
 </div>
 
@@ -132,7 +134,6 @@
                             <td class="fw-semibold">@item.Description</td>
                             <td class="@amountColor fw-bold">@amountPrefix$@item.Amount.ToString("F2")</td>
                             <td>
-                                <!-- Interactive Category Selector for User Overrides -->
                                 <select class="form-select form-select-sm border-0 bg-light"
                                         value="@(item.CategoryId ?? 0)"
                                         @onchange="@(e => OnCategoryOverride(item, e))">
@@ -194,7 +195,6 @@
     private string? statusMessage;
     private string? errorMessage;
 
-    // Search and Pagination fields
     private string searchTerm = string.Empty;
     private int filterCategoryId = 0;
     private int currentPage = 1;
@@ -250,7 +250,7 @@
             bool success = await ApiService.UpdateTransactionCategoryAsync(item.Id, newCatId);
             if (success)
             {
-                statusMessage = $"Category updated for '{item.Description}'!";
+                statusMessage = $"Category updated for '{item.Description}' and ML model retrained!";
                 await LoadData();
             }
             else
@@ -348,22 +348,23 @@
 
     private async Task ExportCsv()
     {
-        if (!transactions.Any())
+        var targetSet = FilteredTransactions;
+        if (!targetSet.Any())
         {
-            errorMessage = "No transactions available to export.";
+            errorMessage = "No matching transactions available to export.";
             return;
         }
 
         var builder = new System.Text.StringBuilder();
         builder.AppendLine("Description,Amount");
 
-        foreach (var t in transactions)
+        foreach (var t in targetSet)
         {
             builder.AppendLine($"\"{t.Description.Replace("\"", "\"\"")}\",{t.Amount}");
         }
 
-        var fileName = $"transactions_export_{DateTime.UtcNow:yyyyMMdd}.csv";
+        var fileName = $"filtered_transactions_{DateTime.UtcNow:yyyyMMdd_HHmm}.csv";
         await JS.InvokeVoidAsync("financeHelpers.downloadFile", fileName, builder.ToString());
-        statusMessage = $"Exported {transactions.Count} transactions to {fileName}";
+        statusMessage = $"Exported {targetSet.Count} filtered transactions to {fileName}";
     }
 }

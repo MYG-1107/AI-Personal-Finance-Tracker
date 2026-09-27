@@ -66,9 +66,20 @@ public class TransactionsController : ControllerBase
         if (transaction == null) return NotFound();
 
         transaction.CategoryId = dto.CategoryId > 0 ? dto.CategoryId : null;
-        transaction.IsAutoCategorized = false; // Mark auto badge false when human overrides
+        transaction.IsAutoCategorized = false;
         
         await _context.SaveChangesAsync();
+
+        // Feed back manual category choice into ML model retraining engine
+        if (dto.CategoryId > 0)
+        {
+            var category = await _context.Categories.FindAsync(dto.CategoryId);
+            if (category != null)
+            {
+                _categorizationService.LearnFromOverride(transaction.Description, category.Name);
+            }
+        }
+
         return NoContent();
     }
 }
