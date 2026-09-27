@@ -45,7 +45,7 @@ An enterprise-grade, privacy-first personal finance application built with **.NE
        │ (Database Query)     │ (Predict / Retrain)
        ▼                      ▼
 [ EF Core + SQLite ]   [ ML.NET Engine ] ──► [ Thread-Safe model.zip ]
-
+```
 
 ---
 
