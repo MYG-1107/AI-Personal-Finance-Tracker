@@ -179,18 +179,7 @@ This project satisfies a 6-Phase Action Plan across the complete software develo
 [x] Phase 6: Quality Assurance & Containerized Deployment: Built a multi-stage Dockerfile, docker-compose.yml, and an xUnit unit/integration test suite achieving a 100% pass rate.
 
 🧪 Enterprise Quality & Testing Suite
-The repository includes a dedicated test project (AIPersonalFinanceTracker.Tests) powered by xUnit and EF Core In-Memory:
 
-Bash
-
-
-dotnet test
-Verified Test Suite Summary
-CategorizationServiceTests: Confirms ML text prediction accuracy for standard merchant descriptions (e.g., "Starbucks Coffee" ➔ "Dining Out").
-
-ML Model Retraining Test: Validates that calling LearnFromOverride() retrains the classification engine for custom transaction descriptions.
-
-TransactionsControllerTests: Tests API POST endpoints to confirm automated category assignment and IsAutoCategorized flagging.
 
 
 
