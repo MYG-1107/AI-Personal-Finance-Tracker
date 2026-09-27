@@ -208,14 +208,6 @@ docker compose up -d
 curl http://localhost:5000/health
 Open your browser and navigate to http://localhost:5000.
 
-Local CLI Commands
-Bash
 
-
-# Execute automated test suite
-dotnet test
-
-# Run API and WebAssembly host locally
-dotnet run --project AIPersonalFinanceTracker.Api/AIPersonalFinanceTracker.Api.csproj
 📜 License
 This project is open-source and available under the MIT License.
