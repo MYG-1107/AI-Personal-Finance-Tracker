@@ -1,8 +1,8 @@
-using AIPersonalFinanceTracker.Api.Data;
-using AIPersonalFinanceTracker.ML;
-using AIPersonalFinanceTracker.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AIPersonalFinanceTracker.Api.Data;
+using AIPersonalFinanceTracker.Shared.Models;
+using AIPersonalFinanceTracker.ML;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
 
@@ -12,11 +12,13 @@ public class TransactionsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly CategorizationService _categorizationService;
+    private readonly AnomalyDetectionService _anomalyService;
 
-    public TransactionsController(AppDbContext context, CategorizationService categorizationService)
+    public TransactionsController(AppDbContext context, CategorizationService categorizationService, AnomalyDetectionService anomalyService)
     {
         _context = context;
         _categorizationService = categorizationService;
+        _anomalyService = anomalyService;
     }
 
     [HttpGet]
@@ -29,59 +31,37 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Transaction>> PostTransaction(Transaction transaction)
+    public async Task<ActionResult<Transaction>> CreateTransaction(Transaction transaction)
     {
         if (transaction.CategoryId == null || transaction.CategoryId == 0)
         {
-            var predictedCategory = _categorizationService.PredictCategory(transaction.Description);
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == predictedCategory.ToLower());
-
-            if (category != null)
-            {
-                transaction.CategoryId = category.Id;
-                transaction.IsAutoCategorized = true;
-            }
-            else
-            {
-                transaction.CategoryId = null;
-            }
+            var (catName, catId) = _categorizationService.PredictCategory(transaction.Description);
+            transaction.CategoryId = catId;
+            transaction.IsAutoCategorized = true;
         }
+
+        var history = await _context.Transactions.ToListAsync();
+        var anomalyCheck = _anomalyService.DetectAnomaly(transaction.Amount, transaction.Description, history);
+        transaction.IsAnomaly = anomalyCheck.IsAnomaly;
+        transaction.AnomalyReason = anomalyCheck.Reason;
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        if (transaction.CategoryId.HasValue)
-        {
-            await _context.Entry(transaction).Reference(t => t.Category).LoadAsync();
-        }
-
+        await _context.Entry(transaction).Reference(t => t.Category).LoadAsync();
         return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
     }
 
     [HttpPut("{id}/category")]
-    public async Task<IActionResult> UpdateTransactionCategory(int id, [FromBody] CategoryOverrideDto dto)
+    public async Task<IActionResult> UpdateCategory(int id, [FromBody] int categoryId)
     {
-        var transaction = await _context.Transactions.FindAsync(id);
-        if (transaction == null) return NotFound();
+        var tx = await _context.Transactions.FindAsync(id);
+        if (tx == null) return NotFound();
 
-        transaction.CategoryId = dto.CategoryId > 0 ? dto.CategoryId : null;
-        transaction.IsAutoCategorized = false;
-        
+        tx.CategoryId = categoryId;
+        tx.IsAutoCategorized = false;
         await _context.SaveChangesAsync();
-
-        // Feed back manual category choice into ML model retraining engine
-        if (dto.CategoryId > 0)
-        {
-            var category = await _context.Categories.FindAsync(dto.CategoryId);
-            if (category != null)
-            {
-                _categorizationService.LearnFromOverride(transaction.Description, category.Name);
-            }
-        }
 
         return NoContent();
     }
 }
-
-public record CategoryOverrideDto(int CategoryId);

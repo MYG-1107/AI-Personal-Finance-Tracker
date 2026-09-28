@@ -6,4 +6,5 @@ public class Category
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = "Expense";
     public decimal MonthlyBudgetLimit { get; set; }
+    public decimal BudgetLimit { get; set; }
 }

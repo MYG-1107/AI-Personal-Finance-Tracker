@@ -34,7 +34,12 @@ public class FinanceApiService
 
     public async Task<bool> UpdateTransactionCategoryAsync(int transactionId, int categoryId)
     {
-        var response = await _http.PutAsJsonAsync($"api/transactions/{transactionId}/category", new { CategoryId = categoryId });
+        var response = await _http.PutAsync($"api/transactions/{transactionId}/category/{categoryId}", null);
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<CashFlowForecastDto?> GetCashFlowForecastAsync()
+    {
+        return await _http.GetFromJsonAsync<CashFlowForecastDto>("api/forecast/cashflow");
     }
 }

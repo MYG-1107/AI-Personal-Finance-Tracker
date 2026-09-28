@@ -1,0 +1,225 @@
+@page "/index"
+@using AIPersonalFinanceTracker.Shared.Models
+@using AIPersonalFinanceTracker.Client.Services
+@inject FinanceApiService ApiService
+
+<PageTitle>Dashboard - AI Personal Finance Tracker</PageTitle>
+
+<div class="container-fluid py-3">
+    <h2 class="mb-4">Financial Overview & Predictive AI Insights</h2>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Calculating financial metrics & ML forecasts...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Budget Alerts -->
+        @foreach (var alert in budgetAlerts)
+        {
+            <div class="alert alert-danger shadow-sm mb-3" role="alert">
+                <strong>⚠️ Budget Limit Exceeded:</strong> Spending in '@alert.CategoryName' has exceeded your budget of $@alert.Budget.ToString("N2") (Current: $@alert.Spent.ToString("N2")).
+            </div>
+        }
+
+        <!-- Top Metrics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white p-3 shadow-sm">
+                    <small class="text-uppercase fw-bold">Current Net Balance</small>
+                    <h3 class="mb-0">@(totalBalance < 0 ? $"-${Math.Abs(totalBalance):N2}" : $"${totalBalance:N2}")</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card @((forecast?.ProjectedEndOfMonthBalance ?? 0m) < 0 ? "bg-danger" : "bg-dark") text-white p-3 shadow-sm">
+                    <small class="text-uppercase fw-bold">Projected Month-End Balance</small>
+                    <h3 class="mb-0">
+                        @((forecast?.ProjectedEndOfMonthBalance ?? 0m) < 0 ? $"-${Math.Abs(forecast?.ProjectedEndOfMonthBalance ?? 0m):N2}" : $"${(forecast?.ProjectedEndOfMonthBalance ?? 0m):N2}")
+                    </h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark p-3 shadow-sm">
+                    <small class="text-uppercase fw-bold">Daily Spend Velocity</small>
+                    <h3 class="mb-0">${(forecast?.AverageDailySpend ?? 0m):N2}/day</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-dark p-3 shadow-sm">
+                    <small class="text-uppercase fw-bold">Days Remaining</small>
+                    <h3 class="mb-0">@(forecast?.DaysRemainingInMonth ?? 0) Days</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Cash Flow & Forecast Section -->
+        <div class="card p-3 shadow-sm mb-4 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">🔮 AI Cash Flow & Balance Forecast</h5>
+                <span class="badge bg-primary">ML Time-Series Extrapolation</span>
+            </div>
+
+            <!-- Insights -->
+            @if (forecast?.Insights != null && forecast.Insights.Any())
+            {
+                <div class="mb-3">
+                    @foreach (var insight in forecast.Insights)
+                    {
+                        <div class="p-2 mb-2 bg-light rounded border-start border-3 border-info">
+                            <span class="fw-semibold">@insight</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Daily Balance Forecast Table -->
+            <h6 class="fw-bold mt-2">14-Day Balance Trajectory</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Projected Daily Spend</th>
+                            <th>Projected Ending Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (forecast?.DailyForecasts != null)
+                        {
+                            @foreach (var df in forecast.DailyForecasts)
+                            {
+                                <tr>
+                                    <td>@df.Date.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (df.IsHistorical)
+                                        {
+                                            <span class="badge bg-secondary">Current</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-primary">Projected</span>
+                                        }
+                                    </td>
+                                    <td>${df.DailySpend:N2}</td>
+                                    <td class="fw-bold @(df.ProjectedBalance < 0 ? "text-danger" : "text-success")">
+                                        @(df.ProjectedBalance < 0 ? $"-${Math.Abs(df.ProjectedBalance):N2}" : $"${df.ProjectedBalance:N2}")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Expense Categories Budget Progress -->
+        <div class="row g-3">
+            <div class="col-md-7">
+                <div class="card p-3 shadow-sm h-100">
+                    <h5 class="mb-3">Expense Budget Limits</h5>
+                    @foreach (var item in categorySpendings)
+                    {
+                        var percentage = item.Budget > 0 ? Math.Min(100, (double)(item.Spent / item.Budget) * 100) : 0;
+                        var isExceeded = item.Spent > item.Budget && item.Budget > 0;
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <strong>@item.CategoryName</strong>
+                                <span class="text-muted">${item.Spent:N2} / ${item.Budget:N2}</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar @(isExceeded ? "bg-danger" : percentage > 80 ? "bg-warning" : "bg-info")" 
+                                     role="progressbar" style="width: @percentage%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card p-3 shadow-sm h-100">
+                    <h5 class="mb-3">Period AI Insights</h5>
+                    <div class="p-3 bg-light rounded mb-3">
+                        <small class="text-muted d-block">Transactions Recorded</small>
+                        <h4 class="mb-0 fw-bold">@totalTransactions</h4>
+                    </div>
+                    <div class="p-3 bg-light rounded mb-3">
+                        <small class="text-muted d-block">AI Auto-Categorized</small>
+                        <h4 class="mb-0 fw-bold text-success">@autoCategorizedCount</h4>
+                    </div>
+                    <div class="p-3 bg-light rounded">
+                        <small class="text-muted d-block">Top Expense Category</small>
+                        <h4 class="mb-0 fw-bold text-danger">@topExpenseCategory</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private decimal totalBalance;
+    private int totalTransactions;
+    private int autoCategorizedCount;
+    private string topExpenseCategory = "N/A";
+
+    private CashFlowForecastDto? forecast;
+    private List<CategorySpending> categorySpendings = new();
+    private List<CategorySpending> budgetAlerts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var transactions = await ApiService.GetTransactionsAsync();
+            var categories = await ApiService.GetCategoriesAsync();
+            forecast = await ApiService.GetCashFlowForecastAsync();
+
+            totalTransactions = transactions.Count;
+            autoCategorizedCount = transactions.Count(t => t.IsAutoCategorized);
+            totalBalance = transactions.Sum(t => t.Amount);
+
+            var spendingMap = transactions
+                .Where(t => t.CategoryId != null)
+                .GroupBy(t => t.CategoryId!.Value)
+                .ToDictionary(g => g.Key, g => g.Sum(t => Math.Abs(t.Amount)));
+
+            categorySpendings = categories
+                .Where(c => c.BudgetLimit > 0)
+                .Select(c => new CategorySpending
+                {
+                    CategoryName = c.Name,
+                    Budget = c.BudgetLimit,
+                    Spent = spendingMap.TryGetValue(c.Id, out var spent) ? spent : 0
+                })
+                .ToList();
+
+            budgetAlerts = categorySpendings.Where(s => s.Spent > s.Budget).ToList();
+
+            var topCat = categorySpendings.OrderByDescending(s => s.Spent).FirstOrDefault();
+            if (topCat != null && topCat.Spent > 0)
+            {
+                topExpenseCategory = topCat.CategoryName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class CategorySpending
+    {
+        public string CategoryName { get; set; } = string.Empty;
+        public decimal Budget { get; set; }
+        public decimal Spent { get; set; }
+    }
+}

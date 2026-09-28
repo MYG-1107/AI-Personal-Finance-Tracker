@@ -1,116 +1,53 @@
 @page "/transactions"
-@using AIPersonalFinanceTracker.Shared.Models
-@using AIPersonalFinanceTracker.Client.Services
-@using Microsoft.AspNetCore.Components.Forms
-@using System.IO
-@inject FinanceApiService ApiService
-@inject IJSRuntime JS
+@inject HttpClient Http
 
-<PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
+<PageTitle>Transactions</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Transactions Management</h2>
-    <div class="d-flex gap-2">
-        <label class="btn btn-outline-success mb-0">
-            Import CSV
-            <InputFile OnChange="HandleCsvUpload" accept=".csv" class="d-none" />
-        </label>
-        <button class="btn btn-outline-secondary" @onclick="ExportCsv">
-            Export (@FilteredTransactions.Count) CSV
-        </button>
-    </div>
-</div>
+<div class="container-fluid py-3">
+    <h2 class="fw-bold mb-3">Transaction History & Ingestion</h2>
 
-@if (!string.IsNullOrEmpty(statusMessage))
-{
-    <div class="alert alert-info alert-dismissible fade show" role="alert">
-        @statusMessage
-        <button type="button" class="btn-close" @onclick="() => statusMessage = null"></button>
-    </div>
-}
+    <div class="row mb-4 g-3">
+        <!-- 2. LOCAL RECEIPT OCR SCANNING DROPZONE -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 h-100 border-start border-4 border-primary">
+                <h5 class="fw-bold text-primary">📄 Local Receipt OCR Ingestion</h5>
+                <p class="small text-muted mb-2">Upload or drag a receipt image/PDF to extract total amount and store details automatically via local OCR.</p>
+                
+                <div class="border border-2 border-dashed rounded p-3 text-center bg-light my-2">
+                    <span class="fs-2 d-block">🧾</span>
+                    <small class="text-muted d-block">Drag & Drop Receipt / Invoice or click to simulate scan</small>
+                    <button class="btn btn-outline-primary btn-sm mt-2" @onclick="SimulateReceiptOcr">
+                        Simulate Receipt Scan
+                    </button>
+                </div>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @errorMessage
-        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-    </div>
-}
-
-<!-- Add New Transaction Form -->
-<div class="card border-0 shadow-sm p-4 mb-4">
-    <h5 class="mb-3">Add New Transaction</h5>
-    <EditForm Model="@newTransaction" OnValidSubmit="HandleAddTransaction">
-        <DataAnnotationsValidator />
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label fw-bold">Description</label>
-                <InputText class="form-control" placeholder="e.g. Starbucks Coffee" @bind-Value="newTransaction.Description" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Amount ($)</label>
-                <InputNumber class="form-control" @bind-Value="newTransaction.Amount" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Category</label>
-                <InputSelect class="form-select" @bind-Value="selectedCategoryId">
-                    <option value="0">-- Select Category --</option>
-                    @foreach (var cat in categories)
-                    {
-                        <option value="@cat.Id">@cat.Name (@cat.Type)</option>
-                    }
-                </InputSelect>
-            </div>
-            <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary px-4" disabled="@isSubmitting">
-                    @if (isSubmitting)
-                    {
-                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                        <span>Adding...</span>
-                    }
-                    else
-                    {
-                        <span>Add</span>
-                    }
-                </button>
-            </div>
-        </div>
-    </EditForm>
-</div>
-
-<!-- Transactions Table with Search & Pagination -->
-<div class="card border-0 shadow-sm p-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-        <h5 class="mb-0">Recent Transactions (@FilteredTransactions.Count)</h5>
-        
-        <!-- Search & Filter Bar -->
-        <div class="d-flex gap-2">
-            <input type="text" class="form-control form-control-sm" placeholder="Search description..."
-                   @bind="searchTerm" @bind:event="oninput" style="width: 200px;" />
-            <select class="form-select form-select-sm" @bind="filterCategoryId" style="width: 180px;">
-                <option value="0">All Categories</option>
-                @foreach (var cat in categories)
+                @if (!string.IsNullOrEmpty(ocrMessage))
                 {
-                    <option value="@cat.Id">@cat.Name</option>
+                    <div class="alert alert-success py-1 px-2 small mt-2">@ocrMessage</div>
                 }
-            </select>
+            </div>
+        </div>
+
+        <!-- Add Transaction Form -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 h-100">
+                <h5 class="fw-bold">Add Manual Transaction</h5>
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Description</label>
+                    <input class="form-control" placeholder="e.g. Starbucks Coffee" @bind="newDescription" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Amount ($)</label>
+                    <input type="number" class="form-control" placeholder="0.00" @bind="newAmount" />
+                </div>
+                <button class="btn btn-primary w-100 mt-auto" @onclick="AddTransaction">Add Transaction</button>
+            </div>
         </div>
     </div>
 
-    @if (isLoading)
-    {
-        <div class="d-flex justify-content-center my-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading transactions...</span>
-            </div>
-        </div>
-    }
-    else if (!FilteredTransactions.Any())
-    {
-        <p class="text-muted">No matching transactions found.</p>
-    }
-    else
-    {
+    <!-- Transaction List -->
+    <div class="card shadow-sm border-0 p-3">
+        <h5 class="fw-bold mb-3">Recent Transactions (@transactions.Count)</h5>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -118,26 +55,24 @@
                         <th>Date</th>
                         <th>Description</th>
                         <th>Amount</th>
-                        <th style="min-width: 180px;">Category (Click to Edit)</th>
-                        <th>AI Auto-Categorized</th>
+                        <th>Category (Click to Override)</th>
+                        <th>Auto-Fenced Status</th>
+                        <th>Anomaly Flag</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in PaginatedTransactions)
+                    @foreach (var tx in transactions)
                     {
-                        var isIncome = item.Category?.Type == "Income";
-                        var amountColor = isIncome ? "text-success" : "text-danger";
-                        var amountPrefix = isIncome ? "+" : "-";
-
                         <tr>
-                            <td>@item.Date.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td class="fw-semibold">@item.Description</td>
-                            <td class="@amountColor fw-bold">@amountPrefix$@item.Amount.ToString("F2")</td>
+                            <td>@tx.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td class="fw-bold">@tx.Description</td>
+                            <td class="@(tx.Amount >= 0 ? "text-success fw-bold" : "text-danger fw-bold")">
+                                $@Math.Abs(tx.Amount).ToString("F2")
+                            </td>
                             <td>
-                                <select class="form-select form-select-sm border-0 bg-light"
-                                        value="@(item.CategoryId ?? 0)"
-                                        @onchange="@(e => OnCategoryOverride(item, e))">
-                                    <option value="0">Uncategorized</option>
+                                <select class="form-select form-select-sm w-auto" 
+                                        value="@(tx.CategoryId ?? 1)" 
+                                        @onchange="@(e => UpdateCategory(tx.Id, e.Value))">
                                     @foreach (var cat in categories)
                                     {
                                         <option value="@cat.Id">@cat.Name</option>
@@ -145,13 +80,23 @@
                                 </select>
                             </td>
                             <td>
-                                @if (item.IsAutoCategorized)
+                                @if (tx.IsAutoCategorized)
                                 {
-                                    <span class="badge bg-success">Auto</span>
+                                    <span class="badge bg-info text-dark">AI Auto-Fenced</span>
                                 }
-                                else if (item.CategoryId.HasValue)
+                                else
                                 {
-                                    <span class="badge bg-info text-dark">User Set</span>
+                                    <span class="badge bg-secondary">User Override</span>
+                                }
+                            </td>
+                            <td>
+                                @if (tx.IsAnomaly)
+                                {
+                                    <span class="badge bg-warning text-dark" title="@tx.AnomalyReason">⚠️ Potential Anomaly</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted">Normal</span>
                                 }
                             </td>
                         </tr>
@@ -159,46 +104,15 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Pagination Controls -->
-        @if (TotalPages > 1)
-        {
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <span class="text-muted small">Page @currentPage of @TotalPages</span>
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</button>
-                    </li>
-                    @for (int p = 1; p <= TotalPages; p++)
-                    {
-                        var pageNum = p;
-                        <li class="page-item @(currentPage == pageNum ? "active" : "")">
-                            <button class="page-link" @onclick="() => ChangePage(pageNum)">@pageNum</button>
-                        </li>
-                    }
-                    <li class="page-item @(currentPage == TotalPages ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                    </li>
-                </ul>
-            </div>
-        }
-    }
+    </div>
 </div>
 
 @code {
     private List<Transaction> transactions = new();
     private List<Category> categories = new();
-    private Transaction newTransaction = new() { Date = DateTime.UtcNow };
-    private int selectedCategoryId = 0;
-    private bool isLoading = true;
-    private bool isSubmitting = false;
-    private string? statusMessage;
-    private string? errorMessage;
-
-    private string searchTerm = string.Empty;
-    private int filterCategoryId = 0;
-    private int currentPage = 1;
-    private int pageSize = 5;
+    private string newDescription = "";
+    private decimal newAmount = 0;
+    private string ocrMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -207,164 +121,48 @@
 
     private async Task LoadData()
     {
-        isLoading = true;
-        try
-        {
-            categories = await ApiService.GetCategoriesAsync();
-            transactions = await ApiService.GetTransactionsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Failed to load data: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        transactions = await Http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new();
+        categories = await Http.GetFromJsonAsync<List<Category>>("api/categories") ?? new();
     }
 
-    private List<Transaction> FilteredTransactions => transactions
-        .Where(t => string.IsNullOrWhiteSpace(searchTerm) || t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-        .Where(t => filterCategoryId == 0 || t.CategoryId == filterCategoryId)
-        .ToList();
-
-    private List<Transaction> PaginatedTransactions => FilteredTransactions
-        .Skip((currentPage - 1) * pageSize)
-        .Take(pageSize)
-        .ToList();
-
-    private int TotalPages => (int)Math.Ceiling((double)FilteredTransactions.Count / pageSize);
-
-    private void ChangePage(int newPage)
+    private async Task AddTransaction()
     {
-        if (newPage >= 1 && newPage <= TotalPages)
+        if (string.IsNullOrWhiteSpace(newDescription)) return;
+
+        var tx = new Transaction
         {
-            currentPage = newPage;
-        }
+            Description = newDescription,
+            Amount = newAmount,
+            Date = DateTime.UtcNow
+        };
+
+        await Http.PostAsJsonAsync("api/transactions", tx);
+        newDescription = "";
+        newAmount = 0;
+        await LoadData();
     }
 
-    private async Task OnCategoryOverride(Transaction item, ChangeEventArgs e)
+    private async Task SimulateReceiptOcr()
     {
-        if (int.TryParse(e.Value?.ToString(), out int newCatId))
+        var response = await Http.PostAsJsonAsync("api/ocr/scan", "Target Superstore Store #1042 Total: $84.50");
+        if (response.IsSuccessStatusCode)
         {
-            bool success = await ApiService.UpdateTransactionCategoryAsync(item.Id, newCatId);
-            if (success)
+            var res = await response.Content.ReadFromJsonAsync<ReceiptScanResultDto>();
+            if (res != null)
             {
-                statusMessage = $"Category updated for '{item.Description}' and ML model retrained!";
-                await LoadData();
-            }
-            else
-            {
-                errorMessage = "Failed to update category.";
+                newDescription = res.Description;
+                newAmount = -res.Amount;
+                ocrMessage = $"Extracted: '{res.Description}' for ${res.Amount:F2} -> Auto-filled below!";
             }
         }
     }
 
-    private async Task HandleAddTransaction()
+    private async Task UpdateCategory(int transactionId, object? rawCatId)
     {
-        if (string.IsNullOrWhiteSpace(newTransaction.Description)) return;
-
-        isSubmitting = true;
-        try
+        if (rawCatId != null && int.TryParse(rawCatId.ToString(), out int catId))
         {
-            if (selectedCategoryId > 0)
-            {
-                newTransaction.CategoryId = selectedCategoryId;
-            }
-
-            newTransaction.Date = DateTime.UtcNow;
-
-            await ApiService.CreateTransactionAsync(newTransaction);
-            statusMessage = "Transaction added successfully!";
-            newTransaction = new() { Date = DateTime.UtcNow };
-            selectedCategoryId = 0;
+            await Http.PutAsJsonAsync($"api/transactions/{transactionId}/category", catId);
             await LoadData();
         }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error adding transaction: {ex.Message}";
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
-    }
-
-    private async Task HandleCsvUpload(InputFileChangeEventArgs e)
-    {
-        statusMessage = null;
-        errorMessage = null;
-
-        try
-        {
-            var file = e.File;
-            if (file == null) return;
-
-            using var ms = new MemoryStream();
-            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
-            ms.Position = 0;
-
-            using var reader = new StreamReader(ms);
-            var csvText = await reader.ReadToEndAsync();
-
-            var lines = csvText.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
-            if (lines.Length <= 1)
-            {
-                errorMessage = "CSV file is empty or missing data rows.";
-                return;
-            }
-
-            int importedCount = 0;
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var parts = lines[i].Split(',');
-                if (parts.Length >= 2)
-                {
-                    var desc = parts[0].Trim().Trim('"');
-                    var amountStr = parts[1].Trim().Trim('"');
-
-                    if (decimal.TryParse(amountStr, out var amount) && !string.IsNullOrWhiteSpace(desc))
-                    {
-                        var t = new Transaction
-                        {
-                            Description = desc,
-                            Amount = amount,
-                            Date = DateTime.UtcNow
-                        };
-                        await ApiService.CreateTransactionAsync(t);
-                        importedCount++;
-                    }
-                }
-            }
-
-            statusMessage = $"Successfully imported {importedCount} transactions!";
-            await LoadData();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error importing CSV: {ex.Message}";
-        }
-    }
-
-    private async Task ExportCsv()
-    {
-        var targetSet = FilteredTransactions;
-        if (!targetSet.Any())
-        {
-            errorMessage = "No matching transactions available to export.";
-            return;
-        }
-
-        var builder = new System.Text.StringBuilder();
-        builder.AppendLine("Description,Amount");
-
-        foreach (var t in targetSet)
-        {
-            builder.AppendLine($"\"{t.Description.Replace("\"", "\"\"")}\",{t.Amount}");
-        }
-
-        var fileName = $"filtered_transactions_{DateTime.UtcNow:yyyyMMdd_HHmm}.csv";
-        await JS.InvokeVoidAsync("financeHelpers.downloadFile", fileName, builder.ToString());
-        statusMessage = $"Exported {targetSet.Count} filtered transactions to {fileName}";
     }
 }

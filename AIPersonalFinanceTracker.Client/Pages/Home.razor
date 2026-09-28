@@ -1,188 +1,169 @@
 @page "/"
-@using AIPersonalFinanceTracker.Shared.Models
-@using AIPersonalFinanceTracker.Client.Services
-@inject FinanceApiService ApiService
-@inject IJSRuntime JS
+@inject HttpClient Http
 
-<PageTitle>Dashboard - AI Personal Finance Tracker</PageTitle>
+<PageTitle>Financial Dashboard</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Financial Summary Dashboard</h2>
-    <button class="btn btn-outline-primary btn-sm" @onclick="LoadDashboard">Refresh</button>
-</div>
+<div class="container-fluid py-3">
+    <h2 class="fw-bold mb-4">Financial Summary & Intelligence Dashboard</h2>
 
-<!-- Budget Exceeded / Warning Alerts -->
-@if (budgetAlerts.Any())
-{
-    <div class="mb-4">
-        @foreach (var alert in budgetAlerts)
-        {
-            <div class="alert @alert.AlertClass alert-dismissible fade show shadow-sm" role="alert">
-                <strong>@alert.Title:</strong> @alert.Message
+    @if (healthScore != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 bg-primary text-white p-3 h-100">
+                    <h6 class="text-uppercase small">Financial Health Score</h6>
+                    <div class="display-4 fw-bold mb-2">@healthScore.HealthScore / 100</div>
+                    <div><span class="badge bg-light text-dark fs-6">Grade: @healthScore.HealthGrade</span></div>
+                </div>
             </div>
-        }
-    </div>
-}
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 p-3 h-100">
+                    <h6 class="fw-bold text-secondary">AI Health & Savings Insights</h6>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var rec in healthScore.Recommendations)
+                        {
+                            <li class="list-group-item px-0 py-1 border-0 small">💡 @rec</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
 
-<!-- Summary Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white p-3 border-0 shadow-sm">
-            <span class="text-uppercase small">Total Net Balance</span>
-            <h3 class="fw-bold mb-0">$@netBalance.ToString("N2")</h3>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-success text-white p-3 border-0 shadow-sm">
-            <span class="text-uppercase small">Total Income</span>
-            <h3 class="fw-bold mb-0">+$@totalIncome.ToString("N2")</h3>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-danger text-white p-3 border-0 shadow-sm">
-            <span class="text-uppercase small">Total Expenses</span>
-            <h3 class="fw-bold mb-0">-$@totalExpenses.ToString("N2")</h3>
-        </div>
-    </div>
-</div>
+    <!-- 1. PREDICTIVE CASH FLOW & BALANCE FORECASTING CARD -->
+    @if (forecast != null)
+    {
+        <div class="card shadow-sm border-0 p-3 mb-4 bg-light border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold m-0 text-dark">📈 Predictive Cash Flow & End-of-Month Balance Forecast</h5>
+                <span class="badge bg-info text-dark">ML.NET Time-Series Forecast</span>
+            </div>
+            <div class="row g-3 my-1">
+                <div class="col-md-6">
+                    <div class="p-3 bg-white rounded shadow-sm border">
+                        <small class="text-muted d-block">Projected End-of-Month Balance</small>
+                        <h4 class="fw-bold @(forecast.ProjectedEndOfMonthBalance >= 0 ? "text-success" : "text-danger") m-0">
+                            $@forecast.ProjectedEndOfMonthBalance.ToString("F2")
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-white rounded shadow-sm border">
+                        <small class="text-muted d-block">Predicted Daily Expense Burn Rate</small>
+                        <h4 class="fw-bold text-dark m-0">$@forecast.PredictedDailyBurnRate.ToString("F2") / day</h4>
+                    </div>
+                </div>
+            </div>
 
-<div class="row g-4 mb-4">
-    <!-- Category Budget Limits & Progress Bars -->
-    <div class="col-md-7">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <h5 class="mb-3">Expense Budget Limits</h5>
-            @if (!categorySpend.Any())
+            @if (forecast.ForecastWarnings.Any())
             {
-                <p class="text-muted">No expense categories available.</p>
+                <div class="mt-2">
+                    @foreach (var warn in forecast.ForecastWarnings)
+                    {
+                        <div class="alert alert-warning py-1 px-3 mb-1 small">⚠️ @warn</div>
+                    }
+                </div>
             }
-            else
-            {
-                @foreach (var cat in categorySpend)
-                {
-                    var percentage = cat.Limit > 0 ? Math.Min(100, (double)(cat.Spent / cat.Limit * 100)) : 0;
-                    var barColor = percentage >= 100 ? "bg-danger" : (percentage >= 80 ? "bg-warning" : "bg-info");
+        </div>
+    }
 
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between fw-semibold small mb-1">
+    <!-- Core Totals -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 p-3 text-center">
+                <h6 class="text-muted">Total Balance</h6>
+                <h3 class="@(totalBalance >= 0 ? "text-success" : "text-danger") fw-bold">$@totalBalance.ToString("F2")</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 p-3 text-center">
+                <h6 class="text-muted">Total Income</h6>
+                <h3 class="text-success fw-bold">+$@totalIncome.ToString("F2")</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 p-3 text-center">
+                <h6 class="text-muted">Total Expenses</h6>
+                <h3 class="text-danger fw-bold">-$@totalExpense.ToString("F2")</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Analytics Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 h-100">
+                <h5 class="fw-bold mb-3">Spending Breakdown by Category</h5>
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var item in categoryTotals)
+                    {
+                        var pct = totalExpense > 0 ? (item.Value / totalExpense) * 100 : 0;
+                        <div>
+                            <div class="d-flex justify-content-between small fw-bold">
+                                <span>@item.Key</span>
+                                <span>$@item.Value.ToString("F2") (@pct.ToString("F0")%)</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: @pct%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 h-100">
+                <h5 class="fw-bold mb-3">Expense Budget Limits</h5>
+                @foreach (var cat in categories.Where(c => c.Type == "Expense"))
+                {
+                    var spent = transactions.Where(t => t.CategoryId == cat.Id && t.Amount < 0).Sum(t => Math.Abs(t.Amount));
+                    var pct = cat.MonthlyBudgetLimit > 0 ? Math.Min(100, (spent / cat.MonthlyBudgetLimit) * 100) : 0;
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small fw-bold">
                             <span>@cat.Name</span>
-                            <span>$@cat.Spent.ToString("N2") / $@cat.Limit.ToString("N2")</span>
+                            <span>$@spent.ToString("F2") / $@cat.MonthlyBudgetLimit.ToString("F2")</span>
                         </div>
                         <div class="progress" style="height: 10px;">
-                            <div class="progress-bar @barColor" role="progressbar" style="width: @percentage%" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar @(spent > cat.MonthlyBudgetLimit ? "bg-danger" : "bg-success")" role="progressbar" style="width: @pct%"></div>
                         </div>
                     </div>
                 }
-            }
-        </div>
-    </div>
-
-    <!-- AI Insights Summary -->
-    <div class="col-md-5">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <h5 class="mb-3">Period AI Insights</h5>
-            <div class="mb-3 p-3 bg-light rounded">
-                <span class="text-muted small">Transactions Recorded</span>
-                <h4 class="fw-bold text-dark mb-0">@totalTransactions</h4>
-            </div>
-            <div class="mb-3 p-3 bg-light rounded">
-                <span class="text-muted small">AI Auto-Categorized</span>
-                <h4 class="fw-bold text-success mb-0">@autoCategorizedCount</h4>
-            </div>
-            <div class="p-3 bg-light rounded">
-                <span class="text-muted small">Top Expense Category</span>
-                <h4 class="fw-bold text-danger mb-0">@(topCategory ?? "N/A")</h4>
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    private decimal netBalance = 0;
+    private List<Transaction> transactions = new();
+    private List<Category> categories = new();
+    private FinancialHealthDto? healthScore;
+    private CashFlowForecastDto? forecast;
+    private decimal totalBalance = 0;
     private decimal totalIncome = 0;
-    private decimal totalExpenses = 0;
-    private int totalTransactions = 0;
-    private int autoCategorizedCount = 0;
-    private string? topCategory;
-
-    private List<CategoryBudgetModel> categorySpend = new();
-    private List<BudgetAlertModel> budgetAlerts = new();
+    private decimal totalExpense = 0;
+    private Dictionary<string, decimal> categoryTotals = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadDashboard();
-    }
-
-    private async Task LoadDashboard()
-    {
-        var transactions = await ApiService.GetTransactionsAsync();
-        var categories = await ApiService.GetCategoriesAsync();
-
-        totalTransactions = transactions.Count;
-        autoCategorizedCount = transactions.Count(t => t.IsAutoCategorized);
-
-        totalIncome = transactions
-            .Where(t => t.Category?.Type == "Income")
-            .Sum(t => t.Amount);
-
-        totalExpenses = transactions
-            .Where(t => t.Category == null || t.Category.Type == "Expense")
-            .Sum(t => t.Amount);
-
-        netBalance = totalIncome - totalExpenses;
-
-        // Group expense spending by category
-        categorySpend = categories
-            .Where(c => c.Type == "Expense")
-            .Select(c => new CategoryBudgetModel
-            {
-                Name = c.Name,
-                Limit = c.MonthlyBudgetLimit,
-                Spent = transactions.Where(t => t.CategoryId == c.Id).Sum(t => t.Amount)
-            })
-            .ToList();
-
-        var highest = categorySpend.OrderByDescending(c => c.Spent).FirstOrDefault();
-        topCategory = highest?.Spent > 0 ? highest.Name : "None";
-
-        // Compute budget alerts
-        budgetAlerts.Clear();
-        foreach (var item in categorySpend)
+        try
         {
-            if (item.Limit > 0)
-            {
-                if (item.Spent >= item.Limit)
-                {
-                    budgetAlerts.Add(new BudgetAlertModel
-                    {
-                        Title = "⚠️ Budget Limit Exceeded",
-                        Message = $"Spending in '{item.Name}' has exceeded your budget of ${item.Limit:N2} (Current: ${item.Spent:N2}).",
-                        AlertClass = "alert-danger"
-                    });
-                }
-                else if (item.Spent >= item.Limit * 0.8m)
-                {
-                    budgetAlerts.Add(new BudgetAlertModel
-                    {
-                        Title = "⚡ Nearing Budget Limit",
-                        Message = $"Spending in '{item.Name}' is at {item.Spent / item.Limit * 100:F0}% of your ${item.Limit:N2} limit.",
-                        AlertClass = "alert-warning"
-                    });
-                }
-            }
+            transactions = await Http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new();
+            categories = await Http.GetFromJsonAsync<List<Category>>("api/categories") ?? new();
+            healthScore = await Http.GetFromJsonAsync<FinancialHealthDto>("api/dashboard/health");
+            forecast = await Http.GetFromJsonAsync<CashFlowForecastDto>("api/dashboard/forecast");
+
+            totalIncome = transactions.Where(t => t.Amount > 0).Sum(t => t.Amount);
+            totalExpense = transactions.Where(t => t.Amount < 0).Sum(t => Math.Abs(t.Amount));
+            totalBalance = totalIncome - totalExpense;
+
+            categoryTotals = transactions
+                .Where(t => t.Amount < 0 && t.Category != null)
+                .GroupBy(t => t.Category!.Name)
+                .ToDictionary(g => g.Key, g => g.Sum(t => Math.Abs(t.Amount)));
         }
-    }
-
-    public class CategoryBudgetModel
-    {
-        public string Name { get; set; } = string.Empty;
-        public decimal Limit { get; set; }
-        public decimal Spent { get; set; }
-    }
-
-    public class BudgetAlertModel
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public string AlertClass { get; set; } = string.Empty;
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 }

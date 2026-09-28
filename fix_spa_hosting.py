@@ -1,4 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+import os
+
+program_path = 'AIPersonalFinanceTracker.Api/Program.cs'
+program_code = """using Microsoft.EntityFrameworkCore;
 using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.Api.Services;
 using AIPersonalFinanceTracker.ML;
@@ -12,7 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<CategorizationService>();
 builder.Services.AddScoped<AnomalyDetectionService>();
 builder.Services.AddScoped<FinancialHealthEngine>();
-builder.Services.AddScoped<AIPersonalFinanceTracker.ML.ForecastService>();
+builder.Services.AddScoped<ForecastService>();
 builder.Services.AddScoped<OcrReceiptService>();
 
 builder.Services.AddControllers().AddJsonOptions(options => {
@@ -38,6 +41,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
+// Serve Blazor WASM client static files
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
@@ -45,6 +49,13 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllers();
+// Route all non-API requests to Blazor index.html
 app.MapFallbackToFile("index.html");
 
 app.Run();
+"""
+
+with open(program_path, 'w', encoding='utf-8') as f:
+    f.write(program_code)
+
+print("Updated Program.cs with Blazor WASM static file middleware and fallback routing.")
