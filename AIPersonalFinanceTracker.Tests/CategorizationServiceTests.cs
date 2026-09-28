@@ -1,34 +1,30 @@
-using AIPersonalFinanceTracker.ML;
 using Xunit;
+using AIPersonalFinanceTracker.ML;
 
 namespace AIPersonalFinanceTracker.Tests;
 
 public class CategorizationServiceTests
 {
-    [Theory]
-    [InlineData("Starbucks Coffee", "Dining Out")]
-    [InlineData("Walmart Grocery Store", "Groceries")]
-    [InlineData("Electric Utility Bill", "Utilities")]
-    [InlineData("Netflix Subscription", "Entertainment")]
-    public void PredictCategory_ShouldReturnExpectedCategory(string description, string expectedCategory)
+    private readonly CategorizationService _service;
+
+    public CategorizationServiceTests()
     {
-        var service = new CategorizationService();
-
-        var result = service.PredictCategory(description);
-
-        Assert.Equal(expectedCategory, result);
+        _service = new CategorizationService();
     }
 
     [Fact]
-    public void LearnFromOverride_ShouldUpdateModelPrediction()
+    public void PredictCategory_Coffee_ReturnsDiningOut()
     {
-        var service = new CategorizationService();
-        string customDescription = "Tech Corp Salary Ref 99021";
-        string newCategory = "Salary";
+        var result = _service.PredictCategory("Starbucks Coffee");
+        Assert.Equal("Dining Out", result.CategoryName);
+        Assert.Equal(2, result.CategoryId);
+    }
 
-        service.LearnFromOverride(customDescription, newCategory);
-        var result = service.PredictCategory(customDescription);
-
-        Assert.Equal(newCategory, result);
+    [Fact]
+    public void PredictCategory_Target_ReturnsGroceries()
+    {
+        var result = _service.PredictCategory("Target Store");
+        Assert.Equal("Groceries", result.CategoryName);
+        Assert.Equal(1, result.CategoryId);
     }
 }

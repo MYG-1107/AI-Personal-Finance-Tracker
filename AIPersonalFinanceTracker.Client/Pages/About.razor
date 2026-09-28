@@ -1,0 +1,56 @@
+@page "/about"
+@inject CurrencyService Currency
+
+<PageTitle>About System</PageTitle>
+
+<div class="container py-4">
+    <div class="card shadow-sm border-0 p-4 mb-4">
+        <h2 class="fw-bold text-primary mb-3">About the AI Personal Finance Tracker</h2>
+        <p class="lead text-secondary">
+            An autonomous, privacy-focused financial intelligence platform designed to simplify expense management, automate categorization, detect abnormal spending, and forecast cash flow using local Machine Learning.
+        </p>
+
+        <hr class="my-4" />
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="p-3 border rounded bg-light h-100">
+                    <h5 class="fw-bold text-dark">What is this System?</h5>
+                    <p class="small text-muted m-0">
+                        A web application built with Blazor WebAssembly, C#, and ML.NET that transforms raw financial transactions into actionable insights.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 border rounded bg-light h-100">
+                    <h5 class="fw-bold text-dark">How It Works</h5>
+                    <ul class="small text-muted ps-3 m-0">
+                        <li><strong>AI Auto-Fencing:</strong> Categorizes transactions using string matching and ML rules.</li>
+                        <li><strong>Predictive Forecasting:</strong> Analyzes current daily burn rates to project end-of-month balances.</li>
+                        <li><strong>Anomaly Detection:</strong> Flags transactions exceeding statistical baseline thresholds.</li>
+                        <li><strong>Local OCR Ingestion:</strong> Extracts merchant names and bill totals directly from receipt documents.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 border rounded bg-light h-100">
+                    <h5 class="fw-bold text-dark">Why This System?</h5>
+                    <p class="small text-muted m-0">
+                        Traditional budget trackers rely on manual data entry or require users to surrender credentials. This system provides automated intelligence while keeping data local.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 border rounded bg-light h-100">
+                    <h5 class="fw-bold text-dark">For Whom?</h5>
+                    <p class="small text-muted m-0">
+                        Built for students, freelancers, professionals, and households globally. With multi-currency formatting and GDPR compliance, users anywhere can manage finances securely.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

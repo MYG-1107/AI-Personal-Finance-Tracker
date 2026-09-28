@@ -1,17 +1,26 @@
 import os
 
-index_path = 'AIPersonalFinanceTracker.Client/Pages/Index.razor'
+transactions_file = 'AIPersonalFinanceTracker.Client/Pages/Transactions.razor'
+home_file = 'AIPersonalFinanceTracker.Client/Pages/Home.razor'
 
-if os.path.exists(index_path):
-    with open(index_path, 'r', encoding='utf-8') as f:
+# Ensure Transactions.razor uses @page "/transactions"
+if os.path.exists(transactions_file):
+    with open(transactions_file, 'r') as f:
         content = f.read()
+    lines = content.splitlines()
+    cleaned = [line for line in lines if not line.strip().startswith('@page ')]
+    new_content = '@page "/transactions"\n' + '\n'.join(cleaned)
+    with open(transactions_file, 'w') as f:
+        f.write(new_content)
 
-    # Resolve route conflict by pointing Index.razor to /index
-    updated = content.replace('@page "/"', '@page "/index"').replace('@page ""', '@page "/index"')
-    
-    with open(index_path, 'w', encoding='utf-8') as f:
-        f.write(updated)
-        
-    print("Resolved route ambiguity in Index.razor.")
-else:
-    print("Index.razor not found.")
+# Ensure Home.razor uses @page "/"
+if os.path.exists(home_file):
+    with open(home_file, 'r') as f:
+        content = f.read()
+    lines = content.splitlines()
+    cleaned = [line for line in lines if not line.strip().startswith('@page ')]
+    new_content = '@page "/"\n' + '\n'.join(cleaned)
+    with open(home_file, 'w') as f:
+        f.write(new_content)
+
+print("Route collision resolved successfully.")

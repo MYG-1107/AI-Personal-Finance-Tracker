@@ -1,5 +1,7 @@
 @page "/"
 @inject HttpClient Http
+@inject CurrencyService Currency
+@implements IDisposable
 
 <PageTitle>Financial Dashboard</PageTitle>
 
@@ -30,7 +32,7 @@
         </div>
     }
 
-    <!-- 1. PREDICTIVE CASH FLOW & BALANCE FORECASTING CARD -->
+    <!-- Predictive Cash Flow & Balance Forecast -->
     @if (forecast != null)
     {
         <div class="card shadow-sm border-0 p-3 mb-4 bg-light border-start border-4 border-info">
@@ -43,14 +45,14 @@
                     <div class="p-3 bg-white rounded shadow-sm border">
                         <small class="text-muted d-block">Projected End-of-Month Balance</small>
                         <h4 class="fw-bold @(forecast.ProjectedEndOfMonthBalance >= 0 ? "text-success" : "text-danger") m-0">
-                            $@forecast.ProjectedEndOfMonthBalance.ToString("F2")
+                            @Currency.Format(forecast.ProjectedEndOfMonthBalance)
                         </h4>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="p-3 bg-white rounded shadow-sm border">
                         <small class="text-muted d-block">Predicted Daily Expense Burn Rate</small>
-                        <h4 class="fw-bold text-dark m-0">$@forecast.PredictedDailyBurnRate.ToString("F2") / day</h4>
+                        <h4 class="fw-bold text-dark m-0">@Currency.Format(forecast.PredictedDailyBurnRate) / day</h4>
                     </div>
                 </div>
             </div>
@@ -72,24 +74,24 @@
         <div class="col-md-4">
             <div class="card shadow-sm border-0 p-3 text-center">
                 <h6 class="text-muted">Total Balance</h6>
-                <h3 class="@(totalBalance >= 0 ? "text-success" : "text-danger") fw-bold">$@totalBalance.ToString("F2")</h3>
+                <h3 class="@(totalBalance >= 0 ? "text-success" : "text-danger") fw-bold">@Currency.Format(totalBalance)</h3>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 p-3 text-center">
                 <h6 class="text-muted">Total Income</h6>
-                <h3 class="text-success fw-bold">+$@totalIncome.ToString("F2")</h3>
+                <h3 class="text-success fw-bold">+@Currency.Format(totalIncome)</h3>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 p-3 text-center">
                 <h6 class="text-muted">Total Expenses</h6>
-                <h3 class="text-danger fw-bold">-$@totalExpense.ToString("F2")</h3>
+                <h3 class="text-danger fw-bold">-@Currency.Format(totalExpense)</h3>
             </div>
         </div>
     </div>
 
-    <!-- Visual Analytics Charts -->
+    <!-- Charts -->
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card shadow-sm border-0 p-3 h-100">
@@ -101,7 +103,7 @@
                         <div>
                             <div class="d-flex justify-content-between small fw-bold">
                                 <span>@item.Key</span>
-                                <span>$@item.Value.ToString("F2") (@pct.ToString("F0")%)</span>
+                                <span>@Currency.Format(item.Value) (@pct.ToString("F0")%)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-info" role="progressbar" style="width: @pct%"></div>
@@ -117,14 +119,15 @@
                 @foreach (var cat in categories.Where(c => c.Type == "Expense"))
                 {
                     var spent = transactions.Where(t => t.CategoryId == cat.Id && t.Amount < 0).Sum(t => Math.Abs(t.Amount));
-                    var pct = cat.MonthlyBudgetLimit > 0 ? Math.Min(100, (spent / cat.MonthlyBudgetLimit) * 100) : 0;
+                    var limit = cat.BudgetLimit > 0 ? cat.BudgetLimit : cat.MonthlyBudgetLimit;
+                    var pct = limit > 0 ? Math.Min(100, (spent / limit) * 100) : 0;
                     <div class="mb-2">
                         <div class="d-flex justify-content-between small fw-bold">
                             <span>@cat.Name</span>
-                            <span>$@spent.ToString("F2") / $@cat.MonthlyBudgetLimit.ToString("F2")</span>
+                            <span>@Currency.Format(spent) / @Currency.Format(limit)</span>
                         </div>
                         <div class="progress" style="height: 10px;">
-                            <div class="progress-bar @(spent > cat.MonthlyBudgetLimit ? "bg-danger" : "bg-success")" role="progressbar" style="width: @pct%"></div>
+                            <div class="progress-bar @(spent > limit ? "bg-danger" : "bg-success")" role="progressbar" style="width: @pct%"></div>
                         </div>
                     </div>
                 }
@@ -145,6 +148,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Currency.OnCurrencyChanged += StateHasChanged;
         try
         {
             transactions = await Http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new();
@@ -165,5 +169,10 @@
         {
             Console.WriteLine(ex.Message);
         }
+    }
+
+    public void Dispose()
+    {
+        Currency.OnCurrencyChanged -= StateHasChanged;
     }
 }

@@ -1,76 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Personal Finance Tracker</title>
     <base href="/" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/app.css" rel="stylesheet" />
-    <link href="AIPersonalFinanceTracker.Client.styles.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        window.financeHelpers = {
-            expenseChart: null,
-            renderChart: function (canvasId, labels, data) {
-                var ctx = document.getElementById(canvasId);
-                if (!ctx) return;
-
-                if (this.expenseChart) {
-                    this.expenseChart.destroy();
-                }
-
-                if (typeof Chart === 'undefined') return;
-
-                this.expenseChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0', '#6c757d', '#198754', '#6f42c1', '#fd7e14']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
-                    }
-                });
-            },
-            downloadFile: function (fileName, content) {
-                var blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-                var link = document.createElement('a');
-                var url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', fileName);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        };
-    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 </head>
-
 <body>
     <div id="app">
         <div class="d-flex justify-content-center align-items-center vh-100">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading application...</span>
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading Blazor WebAssembly...</span>
             </div>
         </div>
     </div>
 
-    <div id="blazor-error-ui">
+    <div id="blazor-error-ui" style="display: none;">
         An unhandled error has occurred.
         <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
     </div>
-
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
-
 </html>

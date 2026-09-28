@@ -1,8 +1,53 @@
 import os
 
-controller_path = 'AIPersonalFinanceTracker.Api/Controllers/TransactionsController.cs'
+os.makedirs('AIPersonalFinanceTracker.ML', exist_ok=True)
 
-with open(controller_path, 'w') as f:
+# 1. CategoryPredictorService.cs
+with open('AIPersonalFinanceTracker.ML/CategoryPredictorService.cs', 'w') as f:
+    f.write('''namespace AIPersonalFinanceTracker.ML;
+
+public class CategoryPredictorService
+{
+    public int PredictCategory(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description)) return 1;
+        var desc = description.ToLowerInvariant();
+        if (desc.Contains("coffee") || desc.Contains("starbucks") || desc.Contains("restaurant") || desc.Contains("food")) return 2;
+        if (desc.Contains("target") || desc.Contains("walmart") || desc.Contains("grocer")) return 1;
+        if (desc.Contains("salary") || desc.Contains("deposit") || desc.Contains("payroll")) return 5;
+        if (desc.Contains("uber") || desc.Contains("lyft") || desc.Contains("gas")) return 3;
+        return 1;
+    }
+}
+''')
+
+# 2. AnomalyDetectionService.cs
+with open('AIPersonalFinanceTracker.ML/AnomalyDetectionService.cs', 'w') as f:
+    f.write('''using AIPersonalFinanceTracker.Shared.Models;
+
+namespace AIPersonalFinanceTracker.ML;
+
+public class AnomalyResult
+{
+    public bool IsAnomaly { get; set; }
+    public string Reason { get; set; } = "";
+}
+
+public class AnomalyDetectionService
+{
+    public AnomalyResult DetectAnomaly(Transaction transaction)
+    {
+        if (Math.Abs(transaction.Amount) > 1000m)
+        {
+            return new AnomalyResult { IsAnomaly = true, Reason = "High-value transaction over $1,000" };
+        }
+        return new AnomalyResult { IsAnomaly = false, Reason = "" };
+    }
+}
+''')
+
+# 3. TransactionsController.cs
+with open('AIPersonalFinanceTracker.Api/Controllers/TransactionsController.cs', 'w') as f:
     f.write('''using Microsoft.AspNetCore.Mvc;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
@@ -23,10 +68,10 @@ public class TransactionsController : ControllerBase
     private readonly CategoryPredictorService _categoryPredictor;
     private readonly AnomalyDetectionService _anomalyDetector;
 
-    public TransactionsController(CategoryPredictorService categoryPredictor = null, AnomalyDetectionService anomalyDetector = null)
+    public TransactionsController(CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
     {
-        _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
-        _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
+        _categoryPredictor = categoryPredictor;
+        _anomalyDetector = anomalyDetector;
     }
 
     [HttpGet]
@@ -54,12 +99,6 @@ public class TransactionsController : ControllerBase
         return Ok(transaction);
     }
 
-    [HttpPost("post")]
-    public ActionResult<Transaction> PostTransaction([FromBody] Transaction transaction)
-    {
-        return AddTransaction(transaction);
-    }
-
     [HttpPut("{id}/category")]
     public IActionResult UpdateCategory(int id, [FromBody] int categoryId)
     {
@@ -73,4 +112,4 @@ public class TransactionsController : ControllerBase
 }
 ''')
 
-print("TransactionsController constructor signature updated successfully.")
+print("Backend files generated successfully.")

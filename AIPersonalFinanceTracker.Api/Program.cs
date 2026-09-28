@@ -1,49 +1,52 @@
-using Microsoft.EntityFrameworkCore;
-using AIPersonalFinanceTracker.Api.Data;
-using AIPersonalFinanceTracker.Api.Services;
 using AIPersonalFinanceTracker.ML;
-using System.Text.Json.Serialization;
+using AIPersonalFinanceTracker.Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+// Register SQLite AppDbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=finance.db"));
 
-builder.Services.AddScoped<CategorizationService>();
+// Register ML Services
+builder.Services.AddScoped<CategoryPredictorService>();
 builder.Services.AddScoped<AnomalyDetectionService>();
-builder.Services.AddScoped<FinancialHealthEngine>();
-builder.Services.AddScoped<AIPersonalFinanceTracker.ML.ForecastService>();
-builder.Services.AddScoped<OcrReceiptService>();
-
-builder.Services.AddControllers().AddJsonOptions(options => {
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-});
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowAll", policy => {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    });
-});
 
 var app = builder.Build();
 
+// Ensure Database is Created & Seeded on Startup
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"DB Init Error: {ex.Message}");
+    }
 }
 
-app.UseCors("AllowAll");
+if (app.Environment.IsDevelopment())
+{
+    app.UseWebAssemblyDebugging();
+}
+else
+{
+    app.UseHsts();
+}
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseAuthorization();
 
+app.MapRazorPages();
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 

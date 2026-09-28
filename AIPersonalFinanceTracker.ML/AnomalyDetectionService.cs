@@ -2,32 +2,20 @@ using AIPersonalFinanceTracker.Shared.Models;
 
 namespace AIPersonalFinanceTracker.ML;
 
+public class AnomalyResult
+{
+    public bool IsAnomaly { get; set; }
+    public string Reason { get; set; } = "";
+}
+
 public class AnomalyDetectionService
 {
-    public AnomalyCheckResult DetectAnomaly(decimal amount, string description, List<Transaction> history)
+    public AnomalyResult DetectAnomaly(Transaction transaction)
     {
-        var result = new AnomalyCheckResult();
-        var absAmount = Math.Abs(amount);
-
-        if (absAmount > 1500 && !description.Contains("Salary", StringComparison.OrdinalIgnoreCase))
+        if (Math.Abs(transaction.Amount) > 1000m)
         {
-            result.IsAnomaly = true;
-            result.Reason = $"High Expense Spike: ${absAmount:F2} exceeds expected baseline threshold.";
-            return result;
+            return new AnomalyResult { IsAnomaly = true, Reason = "High-value transaction over $1,000" };
         }
-
-        var recentDuplicates = history.Where(t => 
-            Math.Abs(t.Amount) == absAmount && 
-            t.Description.Equals(description, StringComparison.OrdinalIgnoreCase) &&
-            (DateTime.UtcNow - t.Date).TotalDays < 2).ToList();
-
-        if (recentDuplicates.Any())
-        {
-            result.IsAnomaly = true;
-            result.Reason = "Potential Duplicate Charge detected within 48 hours.";
-            return result;
-        }
-
-        return result;
+        return new AnomalyResult { IsAnomaly = false, Reason = "" };
     }
 }

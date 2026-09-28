@@ -1,0 +1,75 @@
+@page "/privacy"
+@using AIPersonalFinanceTracker.Client.Services
+@using AIPersonalFinanceTracker.Shared
+@using AIPersonalFinanceTracker.Shared.Models
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<PageTitle>GDPR Privacy & Data Ownership</PageTitle>
+
+<div class="container py-4">
+    <div class="card shadow-sm border-0 p-4 mb-4">
+        <h2 class="fw-bold m-0 mb-2">GDPR Privacy & Data Ownership Center</h2>
+        <p class="text-secondary">
+            This platform operates under local-first data principles. Your financial records, transaction histories, and receipt uploads remain private and are processed on local server instances.
+        </p>
+
+        <hr />
+
+        <h5 class="fw-bold text-dark mb-3">Your Rights under GDPR</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card border p-3 h-100">
+                    <h6 class="fw-bold">Article 15: Right of Access</h6>
+                    <p class="small text-muted">You have the right to inspect all personal data and category associations stored in the database at any time.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border p-3 h-100">
+                    <h6 class="fw-bold">Article 20: Data Portability</h6>
+                    <p class="small text-muted">You can export your complete transaction history in standard machine-readable formats (JSON / CSV).</p>
+                    <button class="btn btn-outline-primary btn-sm mt-auto" @onclick="ExportDataJson">Export All Data (JSON)</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border p-3 h-100">
+                    <h6 class="fw-bold text-danger">Article 17: Right to Erasure</h6>
+                    <p class="small text-muted">You can permanently erase all stored transactions and reset the database to its clean state.</p>
+                    <button class="btn btn-danger btn-sm mt-auto" @onclick="PurgeAllData">Purge All Personal Data</button>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(statusMsg))
+        {
+            <div class="alert alert-info py-2 small">@statusMsg</div>
+        }
+    </div>
+</div>
+
+@code {
+    private string statusMsg = "";
+
+    private async Task ExportDataJson()
+    {
+        var txs = await Http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new();
+        var jsonStr = System.Text.Json.JsonSerializer.Serialize(txs);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(jsonStr);
+        var base64 = Convert.ToBase64String(bytes);
+        await JS.InvokeVoidAsync("eval", "const a=document.createElement('a');a.href='data:application/json;base64," + base64 + "';a.download='financial_data_export.json';a.click();");
+        statusMsg = "Data exported successfully in JSON format (GDPR Art. 20).";
+    }
+
+    private async Task PurgeAllData()
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "GDPR Art. 17 Warning: Are you sure you want to permanently erase all stored transaction data?");
+        if (confirmed)
+        {
+            var res = await Http.DeleteAsync("api/transactions/purge-all");
+            if (res.IsSuccessStatusCode)
+            {
+                statusMsg = "All personal financial data has been permanently erased from the local database.";
+            }
+        }
+    }
+}

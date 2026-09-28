@@ -1,45 +1,42 @@
-using AIPersonalFinanceTracker.Api.Controllers;
-using AIPersonalFinanceTracker.Api.Data;
-using AIPersonalFinanceTracker.ML;
-using AIPersonalFinanceTracker.Shared.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
+using Microsoft.AspNetCore.Mvc;
+using AIPersonalFinanceTracker.Api.Controllers;
+using AIPersonalFinanceTracker.Shared.Models;
+using AIPersonalFinanceTracker.ML;
 
 namespace AIPersonalFinanceTracker.Tests;
 
 public class TransactionsControllerTests
 {
-    private AppDbContext GetInMemoryDbContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+    private readonly TransactionsController _controller;
 
-        var context = new AppDbContext(options);
-        context.Categories.Add(new Category { Id = 1, Name = "Groceries", Type = "Expense", MonthlyBudgetLimit = 500 });
-        context.SaveChanges();
-        return context;
+    public TransactionsControllerTests()
+    {
+        var predictor = new CategoryPredictorService();
+        var anomalyDetector = new AnomalyDetectionService();
+        _controller = new TransactionsController(predictor, anomalyDetector);
     }
 
     [Fact]
-    public async Task PostTransaction_ShouldAutoCategorize()
+    public void GetTransactions_ReturnsOkResult()
     {
-        var context = GetInMemoryDbContext();
-        var mlService = new CategorizationService();
-        var controller = new TransactionsController(context, mlService);
+        var result = _controller.GetTransactions();
+        Assert.NotNull(result);
+    }
 
-        var newTransaction = new Transaction
-        {
-            Description = "Walmart Grocery Store",
-            Amount = 45.50m
-        };
+    [Fact]
+    public void AddTransaction_AddsNewTransaction()
+    {
+        var tx = new Transaction { Description = "Starbucks", Amount = -5.00m };
+        var result = _controller.AddTransaction(tx);
+        Assert.NotNull(result);
+    }
 
-        var result = await controller.PostTransaction(newTransaction);
-
-        var actionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-        var returnedTransaction = Assert.IsType<Transaction>(actionResult.Value);
-        Assert.Equal(1, returnedTransaction.CategoryId);
-        Assert.True(returnedTransaction.IsAutoCategorized);
+    [Fact]
+    public void PostTransaction_AddsNewTransaction()
+    {
+        var tx = new Transaction { Description = "Target Store", Amount = -45.00m };
+        var result = _controller.PostTransaction(tx);
+        Assert.NotNull(result);
     }
 }

@@ -1,8 +1,7 @@
 import os
 
-controller_path = 'AIPersonalFinanceTracker.Api/Controllers/TransactionsController.cs'
-
-with open(controller_path, 'w') as f:
+# 1. Update TransactionsController.cs (Single Constructor)
+with open('AIPersonalFinanceTracker.Api/Controllers/TransactionsController.cs', 'w') as f:
     f.write('''using Microsoft.AspNetCore.Mvc;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
@@ -23,10 +22,10 @@ public class TransactionsController : ControllerBase
     private readonly CategoryPredictorService _categoryPredictor;
     private readonly AnomalyDetectionService _anomalyDetector;
 
-    public TransactionsController(CategoryPredictorService categoryPredictor = null, AnomalyDetectionService anomalyDetector = null)
+    public TransactionsController(CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
     {
-        _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
-        _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
+        _categoryPredictor = categoryPredictor;
+        _anomalyDetector = anomalyDetector;
     }
 
     [HttpGet]
@@ -73,4 +72,40 @@ public class TransactionsController : ControllerBase
 }
 ''')
 
-print("TransactionsController constructor signature updated successfully.")
+# 2. Update Program.cs (DI & Blazor Static File Routing)
+with open('AIPersonalFinanceTracker.Api/Program.cs', 'w') as f:
+    f.write('''using AIPersonalFinanceTracker.ML;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+// Register Services in DI Container
+builder.Services.AddScoped<CategoryPredictorService>();
+builder.Services.AddScoped<AnomalyDetectionService>();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseWebAssemblyDebugging();
+}
+else
+{
+    app.UseHsts();
+}
+
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.MapRazorPages();
+app.MapControllers();
+app.MapFallbackToFile("index.html");
+
+app.Run();
+''')
+
+print("Backend Controller and Program.cs updated successfully.")
