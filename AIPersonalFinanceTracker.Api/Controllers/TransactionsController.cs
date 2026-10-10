@@ -60,39 +60,21 @@ public class TransactionsController : ControllerBase
         return Ok(_fallbackTransactions);
     }
 
-    // Single HttpPost endpoint for web client API calls
     [HttpPost]
     public async Task<IActionResult> AddTransaction([FromBody] TransactionCreateDto dto)
     {
-        if (dto == null) return BadRequest(new { Message = "Payload required." });
+        var desc = dto?.Description ?? "Unspecified";
+        var amt = dto?.Amount ?? 0m;
+        var catId = dto?.CategoryId;
 
         var transaction = new Transaction
         {
-            Description = dto.Description ?? "Unspecified",
-            Amount = dto.Amount,
-            Date = dto.Date ?? DateTime.UtcNow,
-            CategoryId = dto.CategoryId
+            Description = desc,
+            Amount = amt,
+            Date = dto?.Date ?? DateTime.UtcNow,
+            CategoryId = catId
         };
 
-        return await ProcessAndSaveTransaction(transaction);
-    }
-
-    // NonAction overload specifically for C# Unit Tests
-    [NonAction]
-    public async Task<IActionResult> AddTransaction(Transaction transaction)
-    {
-        if (transaction == null) return BadRequest("Transaction required.");
-        return await ProcessAndSaveTransaction(transaction);
-    }
-
-    [NonAction]
-    public async Task<IActionResult> PostTransaction(Transaction transaction)
-    {
-        return await AddTransaction(transaction);
-    }
-
-    private async Task<IActionResult> ProcessAndSaveTransaction(Transaction transaction)
-    {
         if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
         {
             var predId = _categoryPredictor.PredictCategory(transaction.Description);
@@ -122,5 +104,26 @@ public class TransactionsController : ControllerBase
         _fallbackTransactions.Add(transaction);
 
         return Ok(transaction);
+    }
+
+    [NonAction]
+    public async Task<IActionResult> AddTransaction(Transaction transaction)
+    {
+        if (transaction == null) return BadRequest("Transaction required.");
+        
+        var dto = new TransactionCreateDto
+        {
+            Description = transaction.Description,
+            Amount = transaction.Amount,
+            CategoryId = transaction.CategoryId,
+            Date = transaction.Date
+        };
+        return await AddTransaction(dto);
+    }
+
+    [NonAction]
+    public async Task<IActionResult> PostTransaction(Transaction transaction)
+    {
+        return await AddTransaction(transaction);
     }
 }

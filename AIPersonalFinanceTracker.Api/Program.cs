@@ -1,10 +1,17 @@
 using AIPersonalFinanceTracker.ML;
 using AIPersonalFinanceTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
 builder.Services.AddRazorPages();
 
 builder.Services.AddCors(options =>
@@ -40,10 +47,6 @@ app.UseCors();
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
-}
-else
-{
-    app.UseHsts();
 }
 
 app.UseBlazorFrameworkFiles();
