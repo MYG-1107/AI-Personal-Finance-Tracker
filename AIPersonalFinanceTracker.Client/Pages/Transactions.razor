@@ -1,127 +1,113 @@
 @page "/transactions"
-@using AIPersonalFinanceTracker.Client.Services
-@using AIPersonalFinanceTracker.Shared
-@using AIPersonalFinanceTracker.Shared.Models
+@using System.Net.Http.Json
 @inject HttpClient Http
-@inject IJSRuntime JS
-@inject CurrencyService Currency
-@implements IDisposable
 
-<PageTitle>Transactions</PageTitle>
+<PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
 
 <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h2 class="fw-bold m-0">Transaction History && Ingestion</h2>
-        <div class="d-flex gap-2">
-            <label class="btn btn-outline-success btn-sm mb-0">
-                Import (CSV/JSON)
-                <InputFile OnChange="HandleFileImport" accept=".csv,.json" style="display:none;" />
-            </label>
-            <button class="btn btn-outline-primary btn-sm" @onclick="ExportCsv">
-                Export CSV
-            </button>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0">Transaction Management & ML Ingestion</h2>
+        <a href="/" class="btn btn-outline-primary">← Back to Dashboard</a>
     </div>
 
-    @if (!string.IsNullOrEmpty(importStatus))
-    {
-        <div class="alert alert-info py-1 px-3 small mb-3">@importStatus</div>
-    }
-
-    <div class="row mb-4 g-3">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 p-3 h-100 border-start border-4 border-primary">
-                <h5 class="fw-bold text-primary">Local Receipt OCR Ingestion</h5>
-                <p class="small text-muted mb-2">Upload a receipt image or PDF file to extract totals via local OCR, or click simulate to test.</p>
-                
-                <div class="border border-2 border-dashed rounded p-3 text-center bg-light my-2">
-                    <span class="fs-2 d-block">📄</span>
-                    <label class="btn btn-primary btn-sm my-1">
-                        Choose Receipt File
-                        <InputFile OnChange="HandleReceiptUpload" accept="image/*,.pdf" style="display:none;" />
-                    </label>
-                    <div class="text-muted my-1 small">or</div>
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="SimulateReceiptOcr">
-                        Simulate Receipt Scan
-                    </button>
-                </div>
-
-                @if (!string.IsNullOrEmpty(ocrMessage))
+    <!-- Transaction Entry Form -->
+    <div class="card shadow-sm border-0 p-4 mb-4">
+        <h5 class="fw-bold mb-3">Add New Transaction</h5>
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label for="tx-description" class="form-label fw-semibold">Description</label>
+                <input id="tx-description" name="description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
+            </div>
+            <div class="col-md-3">
+                <label for="tx-amount" class="form-label fw-semibold">Amount ($)</label>
+                <input id="tx-amount" name="amount" type="number" step="0.01" class="form-control" @bind="newAmount" placeholder="Negative for Expense (e.g., -45.00)" />
+            </div>
+            <div class="col-md-4">
+                <label for="tx-category" class="form-label fw-semibold">Category (ML Suggested)</label>
+                <select id="tx-category" name="categoryId" class="form-select" @bind="selectedCategoryId">
+                    <option value="0">Auto-Categorize via ML</option>
+                    @if (Categories != null)
+                    {
+                        @foreach (var c in Categories)
+                        {
+                            <option value="@c.Id">@c.Name (@c.Type)</option>
+                        }
+                    }
+                </select>
+                @if (!string.IsNullOrEmpty(predictedCategoryName))
                 {
-                    <div class="alert alert-success py-1 px-2 small mt-2">@ocrMessage</div>
+                    <div class="form-text text-primary fw-semibold mt-1">
+                        🤖 Predicted Category: <strong>@predictedCategoryName</strong>
+                    </div>
                 }
             </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h5 class="fw-bold">Add Manual Transaction</h5>
-                <div class="mb-2">
-                    <label class="form-label small fw-bold">Description</label>
-                    <input class="form-control" placeholder="e.g. Target Superstore or Starbucks Coffee" @bind="newDescription" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Amount (@Currency.SelectedSymbol)</label>
-                    <input type="number" step="0.01" class="form-control" placeholder="0.00" @bind="newAmount" />
-                </div>
-                <button class="btn btn-primary w-100 mt-auto" @onclick="AddTransaction">Add Transaction</button>
+            <div class="col-12 text-end">
+                <button class="btn btn-success px-4 fw-semibold" @onclick="SubmitTransaction" disabled="@isSubmitting">
+                    @(isSubmitting ? "Processing..." : "Add Transaction")
+                </button>
             </div>
         </div>
+
+        @if (!string.IsNullOrEmpty(alertMessage))
+        {
+            <div class="alert @(isAnomalyAlert ? "alert-warning" : "alert-success") alert-dismissible fade show mt-3 mb-0" role="alert">
+                <strong>@(isAnomalyAlert ? "⚠️ Anomaly Alert:" : "✅ Success!")</strong> @alertMessage
+                <button type="button" class="btn-close" @onclick="() => alertMessage = null"></button>
+            </div>
+        }
     </div>
 
-    <div class="card shadow-sm border-0 p-3">
-        <h5 class="fw-bold mb-3">Recent Transactions (@transactions.Count)</h5>
+    <!-- Transaction History -->
+    <div class="card shadow-sm border-0 p-4">
+        <h5 class="fw-bold mb-3">Transaction History</h5>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>Date</th>
                         <th>Description</th>
-                        <th>Amount (@Currency.SelectedSymbol)</th>
-                        <th>Category (Click to Override)</th>
-                        <th>Auto-Fenced Status</th>
-                        <th>Anomaly Flag</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>ML Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var tx in transactions)
+                    @if (TransactionList != null && TransactionList.Any())
+                    {
+                        @foreach (var t in TransactionList.OrderByDescending(x => x.Date))
+                        {
+                            <tr>
+                                <td>@t.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="fw-semibold">@t.Description</td>
+                                <td class="@(t.Amount < 0 ? "text-danger fw-bold" : "text-success fw-bold")">
+                                    @(t.Amount < 0 ? "-" : "+")$@Math.Abs(t.Amount).ToString("N2")
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        @(GetCategoryName(t.CategoryId))
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (t.IsAnomaly)
+                                    {
+                                        <span class="badge bg-danger" title="@t.AnomalyReason">⚠️ Anomaly Spiked</span>
+                                    }
+                                    else if (t.IsAutoCategorized)
+                                    {
+                                        <span class="badge bg-info text-dark">🤖 ML Categorized</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-dark">Manual</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td>@tx.Date.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td class="fw-bold">@tx.Description</td>
-                            <td class="@(tx.Amount >= 0 ? "text-success fw-bold" : "text-danger fw-bold")">
-                                @Currency.Format(tx.Amount)
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm w-auto" 
-                                        value="@(tx.CategoryId ?? 1)" 
-                                        @onchange="@(e => UpdateCategory(tx.Id, e.Value))">
-                                    @foreach (var cat in categories)
-                                    {
-                                        <option value="@cat.Id">@cat.Name</option>
-                                    }
-                                </select>
-                            </td>
-                            <td>
-                                @if (tx.IsAutoCategorized)
-                                {
-                                    <span class="badge bg-info text-dark">AI Auto-Fenced</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">User Override</span>
-                                }
-                            </td>
-                            <td>
-                                @if (tx.IsAnomaly)
-                                {
-                                    <span class="badge bg-warning text-dark" title="@tx.AnomalyReason">⚠️ Potential Anomaly</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-light text-muted">Normal</span>
-                                }
-                            </td>
+                            <td colspan="5" class="text-center text-muted py-4">No transactions recorded yet.</td>
                         </tr>
                     }
                 </tbody>
@@ -131,140 +117,146 @@
 </div>
 
 @code {
-    private List<Transaction> transactions = new();
-    private List<Category> categories = new();
     private string newDescription = "";
-    private decimal newAmount = 0;
-    private string ocrMessage = "";
-    private string importStatus = "";
+    private decimal newAmount = 0m;
+    private int selectedCategoryId = 0;
+    private string? predictedCategoryName;
+    private string? alertMessage;
+    private bool isAnomalyAlert = false;
+    private bool isSubmitting = false;
 
-    public class ReceiptScanResultDto
-    {
-        public string Description { get; set; } = "";
-        public decimal Amount { get; set; }
-    }
+    private List<CategoryDto> Categories = new();
+    private List<TransactionDto> TransactionList = new();
 
     protected override async Task OnInitializedAsync()
     {
-        Currency.OnCurrencyChanged += StateHasChanged;
         await LoadData();
-    }
-
-    public void Dispose()
-    {
-        Currency.OnCurrencyChanged -= StateHasChanged;
     }
 
     private async Task LoadData()
     {
-        transactions = await Http.GetFromJsonAsync<List<Transaction>>("api/transactions") ?? new();
-        categories = await Http.GetFromJsonAsync<List<Category>>("api/categories") ?? new();
+        try
+        {
+            var catResult = await Http.GetFromJsonAsync<List<CategoryDto>>("api/categories");
+            if (catResult != null) Categories = catResult;
+
+            var txResult = await Http.GetFromJsonAsync<List<TransactionDto>>("api/transactions");
+            if (txResult != null) TransactionList = txResult;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
     }
 
-    private async Task AddTransaction()
+    private void PredictCategory()
     {
-        if (string.IsNullOrWhiteSpace(newDescription)) return;
+        if (string.IsNullOrWhiteSpace(newDescription))
+        {
+            predictedCategoryName = null;
+            return;
+        }
 
-        var tx = new Transaction
+        var desc = newDescription.ToLowerInvariant();
+        if (desc.Contains("coffee") || desc.Contains("starbucks") || desc.Contains("restaurant"))
+            predictedCategoryName = "Dining Out";
+        else if (desc.Contains("target") || desc.Contains("walmart") || desc.Contains("grocer"))
+            predictedCategoryName = "Groceries";
+        else if (desc.Contains("salary") || desc.Contains("payroll") || desc.Contains("deposit"))
+            predictedCategoryName = "Salary";
+        else if (desc.Contains("uber") || desc.Contains("lyft") || desc.Contains("gas") || desc.Contains("utility"))
+            predictedCategoryName = "Utilities";
+        else
+            predictedCategoryName = "General";
+    }
+
+    private async Task SubmitTransaction()
+    {
+        if (string.IsNullOrWhiteSpace(newDescription) || newAmount == 0)
+        {
+            alertMessage = "Please enter a description and non-zero amount.";
+            isAnomalyAlert = true;
+            return;
+        }
+
+        isSubmitting = true;
+        alertMessage = null;
+
+        var payload = new
         {
             Description = newDescription,
             Amount = newAmount,
+            CategoryId = selectedCategoryId > 0 ? (int?)selectedCategoryId : null,
             Date = DateTime.UtcNow
         };
 
-        await Http.PostAsJsonAsync("api/transactions", tx);
-        newDescription = "";
-        newAmount = 0;
-        await LoadData();
-    }
-
-    private async Task HandleReceiptUpload(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file != null)
+        try
         {
-            ocrMessage = "Processing document " + file.Name + " via Local OCR...";
-            var response = await Http.PostAsJsonAsync("api/ocr/scan", "Receipt Document: " + file.Name + " Total: $42.80");
+            var response = await Http.PostAsJsonAsync("api/transactions", payload);
             if (response.IsSuccessStatusCode)
             {
-                var res = await response.Content.ReadFromJsonAsync<ReceiptScanResultDto>();
-                if (res != null)
+                var createdTx = await response.Content.ReadFromJsonAsync<TransactionDto>();
+                if (createdTx != null)
                 {
-                    newDescription = res.Description + " (" + file.Name + ")";
-                    newAmount = -res.Amount;
-                    ocrMessage = "Parsed " + file.Name + ": Extracted " + res.Description + " for $" + res.Amount.ToString("F2") + " -> Auto-filled below!";
-                }
-            }
-        }
-    }
-
-    private async Task SimulateReceiptOcr()
-    {
-        var response = await Http.PostAsJsonAsync("api/ocr/scan", "Target Superstore Store #1042 Total: $84.50");
-        if (response.IsSuccessStatusCode)
-        {
-            var res = await response.Content.ReadFromJsonAsync<ReceiptScanResultDto>();
-            if (res != null)
-            {
-                newDescription = res.Description;
-                newAmount = -res.Amount;
-                ocrMessage = "Simulated Extraction: " + res.Description + " for $" + res.Amount.ToString("F2") + " -> Auto-filled below!";
-            }
-        }
-    }
-
-    private async Task UpdateCategory(int transactionId, object? rawCatId)
-    {
-        if (rawCatId != null && int.TryParse(rawCatId.ToString(), out int catId))
-        {
-            await Http.PutAsJsonAsync("api/transactions/" + transactionId + "/category", catId);
-            await LoadData();
-        }
-    }
-
-    private async Task ExportCsv()
-    {
-        var lines = new List<string> { "Date,Description,Amount,Category,AutoCategorized,IsAnomaly" };
-        foreach (var t in transactions)
-        {
-            var catName = categories.FirstOrDefault(c => c.Id == t.CategoryId)?.Name ?? "Uncategorized";
-            var cleanDesc = t.Description.Replace(',', ' ');
-            lines.Add(t.Date.ToString("yyyy-MM-dd HH:mm") + "," + cleanDesc + "," + t.Amount + "," + catName + "," + t.IsAutoCategorized + "," + t.IsAnomaly);
-        }
-        var csvStr = string.Join("\n", lines);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(csvStr);
-        var base64 = Convert.ToBase64String(bytes);
-        var jsCode = "let a=document.createElement('a');a.href='data:text/csv;base64," + base64 + "';a.download='transactions_export.csv';a.click();";
-        await JS.InvokeVoidAsync("eval", jsCode);
-    }
-
-    private async Task HandleFileImport(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file != null)
-        {
-            using var stream = file.OpenReadStream();
-            using var reader = new System.IO.StreamReader(stream);
-            var content = await reader.ReadToEndAsync();
-
-            int importedCount = 0;
-            var lines = content.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in lines.Skip(1))
-            {
-                var parts = line.Split(',');
-                if (parts.Length >= 3)
-                {
-                    var amtStr = parts[2].Trim().Trim('"');
-                    if (decimal.TryParse(amtStr, out decimal amt))
+                    if (createdTx.IsAnomaly)
                     {
-                        var desc = parts[1].Trim().Trim('"');
-                        await Http.PostAsJsonAsync("api/transactions", new Transaction { Description = desc, Amount = amt, Date = DateTime.UtcNow });
-                        importedCount++;
+                        isAnomalyAlert = true;
+                        alertMessage = $"Transaction saved! Anomaly Flag: {createdTx.AnomalyReason}";
+                    }
+                    else
+                    {
+                        isAnomalyAlert = false;
+                        alertMessage = "Transaction recorded and auto-categorized!";
                     }
                 }
+
+                newDescription = "";
+                newAmount = 0m;
+                selectedCategoryId = 0;
+                predictedCategoryName = null;
+
+                await LoadData();
             }
-            importStatus = "Successfully imported " + importedCount + " transactions from " + file.Name;
-            await LoadData();
+            else
+            {
+                isAnomalyAlert = true;
+                alertMessage = "Server returned an error while saving transaction.";
+            }
         }
+        catch (Exception ex)
+        {
+            isAnomalyAlert = true;
+            alertMessage = $"Request failed: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string GetCategoryName(int? categoryId)
+    {
+        if (!categoryId.HasValue) return "Uncategorized";
+        var cat = Categories.FirstOrDefault(c => c.Id == categoryId.Value);
+        return cat != null ? cat.Name : "General";
+    }
+
+    public class CategoryDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+    }
+
+    public class TransactionDto
+    {
+        public int Id { get; set; }
+        public string Description { get; set; } = "";
+        public decimal Amount { get; set; }
+        public DateTime Date { get; set; }
+        public int? CategoryId { get; set; }
+        public bool IsAutoCategorized { get; set; }
+        public bool IsAnomaly { get; set; }
+        public string? AnomalyReason { get; set; }
     }
 }

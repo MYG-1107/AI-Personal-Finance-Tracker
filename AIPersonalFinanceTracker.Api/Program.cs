@@ -7,17 +7,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// Register SQLite AppDbContext
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=finance.db"));
 
-// Register ML Services
 builder.Services.AddScoped<CategoryPredictorService>();
 builder.Services.AddScoped<AnomalyDetectionService>();
 
 var app = builder.Build();
 
-// Ensure Database is Created & Seeded on Startup
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -31,6 +34,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"DB Init Error: {ex.Message}");
     }
 }
+
+app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {

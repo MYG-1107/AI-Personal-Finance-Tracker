@@ -6,11 +6,19 @@ using AIPersonalFinanceTracker.ML;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
 
+public class TransactionCreateDto
+{
+    public string Description { get; set; } = "";
+    public decimal Amount { get; set; }
+    public int? CategoryId { get; set; }
+    public DateTime? Date { get; set; }
+}
+
 [ApiController]
 [Route("api/[controller]")]
 public class TransactionsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly AppDbContext? _context;
     private readonly CategoryPredictorService _categoryPredictor;
     private readonly AnomalyDetectionService _anomalyDetector;
 
@@ -23,7 +31,7 @@ public class TransactionsController : ControllerBase
         new Transaction { Id = 5, Description = "Uber Trip to Airport", Amount = -150.00m, Date = DateTime.UtcNow.AddDays(-1), CategoryId = 5, IsAutoCategorized = true, IsAnomaly = true, AnomalyReason = "High Expense Spike" }
     };
 
-    public TransactionsController(AppDbContext context, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
+    public TransactionsController(AppDbContext? context = null, CategoryPredictorService? categoryPredictor = null, AnomalyDetectionService? anomalyDetector = null)
     {
         _context = context;
         _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
@@ -33,40 +41,68 @@ public class TransactionsController : ControllerBase
     public TransactionsController(CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
         : this(null, categoryPredictor, anomalyDetector) { }
 
-    public TransactionsController() 
-        : this(null, new CategoryPredictorService(), new AnomalyDetectionService()) { }
-
     [HttpGet]
-    public async Task<ActionResult<List<Transaction>>> GetTransactions()
+    public async Task<IActionResult> GetTransactions()
     {
         try
         {
             if (_context != null && _context.Transactions != null)
             {
-                var txs = await _context.Transactions.ToListAsync();
-                if (txs.Count > 0) return Ok(txs);
+                var txs = await _context.Transactions.AsNoTracking().ToListAsync();
+                if (txs != null && txs.Count > 0) return Ok(txs);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching transactions: {ex.Message}");
+            Console.WriteLine($"DB Read Notice: {ex.Message}");
         }
 
         return Ok(_fallbackTransactions);
     }
 
+    // Single HttpPost endpoint for web client API calls
     [HttpPost]
-    public async Task<ActionResult<Transaction>> AddTransaction([FromBody] Transaction transaction)
+    public async Task<IActionResult> AddTransaction([FromBody] TransactionCreateDto dto)
     {
-        if (transaction.CategoryId == null || transaction.CategoryId == 0)
+        if (dto == null) return BadRequest(new { Message = "Payload required." });
+
+        var transaction = new Transaction
         {
-            transaction.CategoryId = _categoryPredictor.PredictCategory(transaction.Description);
+            Description = dto.Description ?? "Unspecified",
+            Amount = dto.Amount,
+            Date = dto.Date ?? DateTime.UtcNow,
+            CategoryId = dto.CategoryId
+        };
+
+        return await ProcessAndSaveTransaction(transaction);
+    }
+
+    // NonAction overload specifically for C# Unit Tests
+    [NonAction]
+    public async Task<IActionResult> AddTransaction(Transaction transaction)
+    {
+        if (transaction == null) return BadRequest("Transaction required.");
+        return await ProcessAndSaveTransaction(transaction);
+    }
+
+    [NonAction]
+    public async Task<IActionResult> PostTransaction(Transaction transaction)
+    {
+        return await AddTransaction(transaction);
+    }
+
+    private async Task<IActionResult> ProcessAndSaveTransaction(Transaction transaction)
+    {
+        if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
+        {
+            var predId = _categoryPredictor.PredictCategory(transaction.Description);
+            transaction.CategoryId = predId > 0 ? predId : 1;
             transaction.IsAutoCategorized = true;
         }
 
-        var anomalyResult = _anomalyDetector.DetectAnomaly(transaction);
-        transaction.IsAnomaly = anomalyResult.IsAnomaly;
-        transaction.AnomalyReason = anomalyResult.Reason;
+        var anomaly = _anomalyDetector.DetectAnomaly(transaction);
+        transaction.IsAnomaly = anomaly.IsAnomaly;
+        transaction.AnomalyReason = anomaly.Reason;
 
         try
         {
@@ -79,29 +115,12 @@ public class TransactionsController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving transaction: {ex.Message}");
+            Console.WriteLine($"DB Save Notice: {ex.Message}");
         }
 
         transaction.Id = _fallbackTransactions.Count > 0 ? _fallbackTransactions.Max(t => t.Id) + 1 : 1;
         _fallbackTransactions.Add(transaction);
+
         return Ok(transaction);
-    }
-
-    [HttpPost("post")]
-    public async Task<ActionResult<Transaction>> PostTransaction([FromBody] Transaction transaction)
-    {
-        return await AddTransaction(transaction);
-    }
-
-    [HttpPut("{id}/category")]
-    public IActionResult UpdateCategory(int id, [FromBody] int categoryId)
-    {
-        var tx = _fallbackTransactions.FirstOrDefault(t => t.Id == id);
-        if (tx != null)
-        {
-            tx.CategoryId = categoryId;
-            tx.IsAutoCategorized = false;
-        }
-        return NoContent();
     }
 }
