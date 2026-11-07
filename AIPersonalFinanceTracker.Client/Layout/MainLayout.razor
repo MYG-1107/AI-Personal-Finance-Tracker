@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject FinanceApiService ApiService
 @inject CurrencyService Currency
+@inject IJSRuntime JS
 
 <div class="page">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 px-3">
@@ -10,6 +11,9 @@
                 <a class="nav-link text-white fw-semibold me-3" href="/">Dashboard</a>
                 <a class="nav-link text-white fw-semibold" href="/transactions">Transactions & Input Form</a>
                 <a class="nav-link text-white fw-semibold ms-3" href="/profile">Profile</a>
+                <a class="nav-link text-white fw-semibold ms-3" href="/goals">Goals</a>
+                <a class="nav-link text-white fw-semibold ms-3" href="/advisor">AI Advisor</a>
+                <button class="btn btn-sm btn-outline-light ms-3" @onclick="ToggleTheme">@((darkMode) ? "Light mode" : "Dark mode")</button>
             </div>
         </div>
     </nav>
@@ -19,6 +23,14 @@
 </div>
 
 @code {
+    private bool darkMode;
+
+    private void ToggleTheme()
+    {
+        darkMode = !darkMode;
+        JS.InvokeVoidAsync("setTheme", darkMode ? "dark" : "light");
+    }
+
     protected override async Task OnInitializedAsync()
     {
         try

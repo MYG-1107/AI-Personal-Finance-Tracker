@@ -2,6 +2,7 @@
 @using AIPersonalFinanceTracker.Shared.Models
 @using AIPersonalFinanceTracker.Client.Services
 @inject FinanceApiService ApiService
+@inject CurrencyService Currency
 
 <PageTitle>Dashboard - AI Personal Finance Tracker</PageTitle>
 
@@ -118,6 +119,20 @@
 
         <!-- Expense Categories Budget Progress -->
         <div class="row g-3">
+            <div class="col-lg-5">
+                <div class="card p-3 shadow-sm h-100">
+                    <h5 class="mb-3">Spending distribution</h5>
+                    <div class="donut-chart" style="@DonutStyle" role="img" aria-label="Spending by category"></div>
+                    <div class="mt-3">
+                        @foreach (var item in categorySpendings.Where(x => x.Spent > 0))
+                        {
+                            <div class="d-flex justify-content-between small border-bottom py-1">
+                                <span>@item.CategoryName</span><strong>@Currency.Format(item.Spent)</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
             <div class="col-md-7">
                 <div class="card p-3 shadow-sm h-100">
                     <h5 class="mb-3">Expense Budget Limits</h5>
@@ -155,6 +170,21 @@
                         <h4 class="mb-0 fw-bold text-danger">@topExpenseCategory</h4>
                     </div>
                 </div>
+                <div class="card p-3 shadow-sm mt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Cash flow trend</h5>
+                        <span class="badge bg-success">Actual balance</span>
+                    </div>
+                    <div class="cashflow-bars mt-3">
+                        @foreach (var point in cashflowPoints)
+                        {
+                            <div class="cashflow-point" title="@point.Label: @Currency.Format(point.Value)">
+                                <div class="cashflow-bar @(point.Value < 0 ? "negative" : "")" style="height:@($"{Math.Max(8, Math.Min(100, (double)Math.Abs(point.Value) / Math.Max(1, (double)cashflowMax) * 100))}%")"></div>
+                                <small>@point.Label</small>
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     }
@@ -166,6 +196,11 @@
     private int totalTransactions;
     private int autoCategorizedCount;
     private string topExpenseCategory = "N/A";
+    private List<CashflowPoint> cashflowPoints = new();
+    private decimal cashflowMax => cashflowPoints.Count == 0 ? 1 : cashflowPoints.Max(x => Math.Abs(x.Value));
+    private string DonutStyle => categorySpendings.Count == 0
+        ? "background:#dfe5ec"
+        : $"background:conic-gradient(#0d6efd 0 35%, #20c997 35% 60%, #ffc107 60% 78%, #dc3545 78% 100%)";
 
     private CashFlowForecastDto? forecast;
     private List<CategorySpending> categorySpendings = new();
@@ -182,6 +217,15 @@
             totalTransactions = transactions.Count;
             autoCategorizedCount = transactions.Count(t => t.IsAutoCategorized);
             totalBalance = transactions.Sum(t => t.Amount);
+            cashflowPoints = transactions
+                .OrderBy(t => t.Date)
+                .TakeLast(12)
+                .Select(t => new CashflowPoint
+                {
+                    Label = t.Date.ToString("MM/dd"),
+                    Value = t.Amount
+                })
+                .ToList();
 
             var spendingMap = transactions
                 .Where(t => t.Amount < 0)
@@ -222,5 +266,11 @@
         public string CategoryName { get; set; } = string.Empty;
         public decimal Budget { get; set; }
         public decimal Spent { get; set; }
+    }
+
+    private class CashflowPoint
+    {
+        public string Label { get; set; } = "";
+        public decimal Value { get; set; }
     }
 }

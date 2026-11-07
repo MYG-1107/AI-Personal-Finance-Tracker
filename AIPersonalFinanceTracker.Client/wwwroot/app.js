@@ -7,3 +7,4 @@ window.downloadFile = (fileName, content) => {
     link.click();
     URL.revokeObjectURL(url);
 };
+window.setTheme = (theme) => document.documentElement.setAttribute("data-theme", theme);

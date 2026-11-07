@@ -1,0 +1,40 @@
+@page "/advisor"
+@inject FinanceApiService Api
+
+<PageTitle>AI Financial Advisor - AI Personal Finance Tracker</PageTitle>
+
+<div class="container-fluid py-3">
+    <h2 class="fw-bold">Conversational Financial Advisor</h2>
+    <p class="text-muted">Ask questions about your stored transactions. Your data stays inside this application.</p>
+    <div class="card shadow-sm border-0 p-4" style="max-width:900px">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @foreach (var suggestion in suggestions)
+            {
+                <button class="btn btn-outline-primary btn-sm" @onclick="() => question = suggestion">@suggestion</button>
+            }
+        </div>
+        <textarea class="form-control mb-3" rows="3" @bind="question" placeholder="Where did I spend the most this week?"></textarea>
+        <button class="btn btn-primary" @onclick="Ask" disabled="@isBusy">@(isBusy ? "Analyzing..." : "Ask advisor")</button>
+        @if (response != null)
+        {
+            <div class="alert alert-success mt-4 mb-0"><h5 class="fw-bold">Advisor insight</h5><p>@response.Answer</p>
+                <ul class="mb-0">@foreach (var highlight in response.Highlights) { <li>@highlight</li> }</ul>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string question = "";
+    private bool isBusy;
+    private AdvisorResponse? response;
+    private readonly string[] suggestions = { "Where did I spend the most?", "How can I cut down transport expenses?", "Give me a financial summary" };
+
+    private async Task Ask()
+    {
+        if (string.IsNullOrWhiteSpace(question)) return;
+        isBusy = true;
+        response = await Api.AskAdvisorAsync(question);
+        isBusy = false;
+    }
+}

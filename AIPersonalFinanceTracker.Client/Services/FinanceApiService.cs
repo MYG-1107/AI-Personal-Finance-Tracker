@@ -55,4 +55,19 @@ public class FinanceApiService
             ? await response.Content.ReadFromJsonAsync<UserProfile>()
             : null;
     }
+
+    public async Task<List<SavingsGoal>> GetGoalsAsync() =>
+        await _http.GetFromJsonAsync<List<SavingsGoal>>("api/goals") ?? new();
+
+    public async Task<SavingsGoal?> CreateGoalAsync(SavingsGoal goal)
+    {
+        var response = await _http.PostAsJsonAsync("api/goals", goal);
+        return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<SavingsGoal>() : null;
+    }
+
+    public async Task<AdvisorResponse?> AskAdvisorAsync(string question)
+    {
+        var response = await _http.PostAsJsonAsync("api/advisor/ask", new AdvisorRequest { Question = question });
+        return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<AdvisorResponse>() : null;
+    }
 }

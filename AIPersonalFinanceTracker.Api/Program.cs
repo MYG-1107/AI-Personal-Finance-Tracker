@@ -1,5 +1,6 @@
 using AIPersonalFinanceTracker.ML;
 using AIPersonalFinanceTracker.Api.Data;
+using AIPersonalFinanceTracker.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -25,6 +26,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<CategoryPredictorService>();
 builder.Services.AddScoped<AnomalyDetectionService>();
+builder.Services.AddScoped<ForecastService>();
+builder.Services.AddScoped<OcrReceiptService>();
 
 var app = builder.Build();
 
@@ -50,6 +53,14 @@ using (var scope = app.Services.CreateScope())
                 (Id, DisplayName, Email, CountryCode, CurrencyCode, TimeZone, MonthlyBudgetTarget, UpdatedAt)
             VALUES
                 (1, '', '', 'US', 'USD', 'UTC', '0', '2026-01-01T00:00:00Z');
+            CREATE TABLE IF NOT EXISTS SavingsGoals (
+                Id INTEGER NOT NULL CONSTRAINT PK_SavingsGoals PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                TargetAmount TEXT NOT NULL,
+                CurrentAmount TEXT NOT NULL,
+                TargetDate TEXT NULL,
+                Color TEXT NOT NULL
+            );
             """);
     }
     catch (Exception ex)
