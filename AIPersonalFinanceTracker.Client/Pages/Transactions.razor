@@ -34,10 +34,28 @@
     <!-- Transaction Entry Form -->
     <div class="card shadow-sm border-0 p-4 mb-4">
         <h5 class="fw-bold mb-3">Add New Transaction</h5>
+        <div class="input-group mb-3">
+            <input class="form-control" @bind="smartText" placeholder="Smart Add: Spent 450 INR on groceries at Reliance Fresh yesterday" />
+            <button class="btn btn-outline-primary" @onclick="ParseSmartAdd" disabled="@string.IsNullOrWhiteSpace(smartText)">🤖 Parse</button>
+        </div>
+        @if (smartPreview != null)
+        {
+            <div class="alert alert-info py-2">Parsed <strong>@smartPreview.Description</strong> as
+                <strong>@smartPreview.Amount.ToString("N2") @smartPreview.CurrencyCode</strong>
+                (@smartPreview.SuggestedCategoryName). Review the fields below and save.</div>
+        }
         <div class="row g-3">
             <div class="col-md-4">
                 <label for="tx-description" class="form-label fw-semibold">Description</label>
                 <input id="tx-description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
+            </div>
+            <div class="form-check mt-3">
+                <input id="recurring" class="form-check-input" type="checkbox" @bind="isRecurring" />
+                <label class="form-check-label" for="recurring">Repeat monthly</label>
+                @if (isRecurring)
+                {
+                    <input class="form-control d-inline-block ms-3" style="width: 110px" type="number" min="1" max="31" @bind="recurrenceDay" aria-label="Day of month" />
+                }
             </div>
             <div class="col-md-2">
                 <label for="tx-amount" class="form-label fw-semibold">Amount ($)</label>
@@ -187,6 +205,10 @@
     private string searchTerm = "";
     private int filterCategoryId;
     private string filterType = "All";
+    private string smartText = "";
+    private SmartAddPreview? smartPreview;
+    private bool isRecurring;
+    private int recurrenceDay = DateTime.UtcNow.Day;
 
     private IEnumerable<Transaction> FilteredTransactions =>
         (transactions ?? Enumerable.Empty<Transaction>())
@@ -256,7 +278,9 @@
                 Description = newDescription,
                 Amount = transactionType == "Expense" ? -Math.Abs(newAmount) : Math.Abs(newAmount),
                 CategoryId = selectedCategoryId ?? predictedCategoryId,
-                Date = DateTime.UtcNow
+                Date = DateTime.UtcNow,
+                IsRecurring = isRecurring,
+                RecurrenceDay = isRecurring ? Math.Clamp(recurrenceDay, 1, 31) : null
             };
 
             var response = await Http.PostAsJsonAsync("api/transactions", payload);
@@ -279,6 +303,36 @@
                 transactionType = "Expense";
                 selectedCategoryId = null;
                 predictedCategoryId = 0;
+                smartText = "";
+                smartPreview = null;
+                isRecurring = false;
+            }
+
+            private async Task ParseSmartAdd()
+            {
+                try
+                {
+                    var response = await Http.PostAsJsonAsync("api/transactions/smart-add", new SmartAddRequest { Text = smartText });
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        errorMessage = await response.Content.ReadAsStringAsync();
+                        return;
+                    }
+
+                    smartPreview = await response.Content.ReadFromJsonAsync<SmartAddPreview>();
+                    if (smartPreview != null)
+                    {
+                        newDescription = smartPreview.Description;
+                        newAmount = Math.Abs(smartPreview.Amount);
+                        transactionType = smartPreview.Amount >= 0 ? "Income" : "Expense";
+                        selectedCategoryId = smartPreview.SuggestedCategoryId;
+                        predictedCategoryId = smartPreview.SuggestedCategoryId ?? 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Smart Add failed: {ex.Message}";
+                }
             }
             else
             {

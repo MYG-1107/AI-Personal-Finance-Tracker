@@ -53,6 +53,8 @@ public class ProfileController : ControllerBase
 
         if (profile.MonthlyBudgetTarget < 0)
             return BadRequest(new { message = "Monthly budget cannot be negative." });
+        if (profile.AutoGoalAllocationPercent < 0 || profile.AutoGoalAllocationPercent > 100)
+            return BadRequest(new { message = "Goal allocation must be between 0 and 100 percent." });
 
         var existing = await _context.UserProfiles.SingleOrDefaultAsync(p => p.Id == 1);
         if (existing == null)
@@ -67,6 +69,7 @@ public class ProfileController : ControllerBase
         existing.CurrencyCode = currency;
         existing.TimeZone = string.IsNullOrWhiteSpace(profile.TimeZone) ? "UTC" : profile.TimeZone.Trim();
         existing.MonthlyBudgetTarget = profile.MonthlyBudgetTarget;
+        existing.AutoGoalAllocationPercent = profile.AutoGoalAllocationPercent;
         existing.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

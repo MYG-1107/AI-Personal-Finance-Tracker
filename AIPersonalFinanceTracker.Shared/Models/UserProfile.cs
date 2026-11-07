@@ -9,5 +9,6 @@ public class UserProfile
     public string CurrencyCode { get; set; } = "USD";
     public string TimeZone { get; set; } = "UTC";
     public decimal MonthlyBudgetTarget { get; set; }
+    public decimal AutoGoalAllocationPercent { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

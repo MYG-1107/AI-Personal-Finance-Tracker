@@ -11,4 +11,8 @@ public class Transaction
     public string? AnomalyReason { get; set; }
     public int? CategoryId { get; set; }
     public Category? Category { get; set; }
+    public bool IsRecurring { get; set; }
+    public int? RecurrenceDay { get; set; }
+    public DateTime? NextOccurrence { get; set; }
+    public string? AnomalyStatus { get; set; }
 }

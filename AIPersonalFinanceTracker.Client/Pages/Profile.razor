@@ -67,6 +67,12 @@
                             <input id="budget" type="number" min="0" step="0.01" class="form-control"
                                    @bind="profile.MonthlyBudgetTarget" />
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="goal-allocation">Auto-save income to goals (%)</label>
+                            <input id="goal-allocation" type="number" min="0" max="100" step="1" class="form-control"
+                                   @bind="profile.AutoGoalAllocationPercent" />
+                            <small class="text-muted">Split this percentage across active savings goals whenever income is added.</small>
+                        </div>
                     </div>
                     <button class="btn btn-primary mt-4" @onclick="SaveProfile" disabled="@isSaving">
                         @(isSaving ? "Saving..." : "Save preferences")

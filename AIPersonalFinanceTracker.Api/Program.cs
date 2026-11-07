@@ -47,12 +47,13 @@ using (var scope = app.Services.CreateScope())
                 CurrencyCode TEXT NOT NULL,
                 TimeZone TEXT NOT NULL,
                 MonthlyBudgetTarget TEXT NOT NULL,
+                AutoGoalAllocationPercent TEXT NOT NULL,
                 UpdatedAt TEXT NOT NULL
             );
             INSERT OR IGNORE INTO UserProfiles
-                (Id, DisplayName, Email, CountryCode, CurrencyCode, TimeZone, MonthlyBudgetTarget, UpdatedAt)
+                (Id, DisplayName, Email, CountryCode, CurrencyCode, TimeZone, MonthlyBudgetTarget, AutoGoalAllocationPercent, UpdatedAt)
             VALUES
-                (1, '', '', 'US', 'USD', 'UTC', '0', '2026-01-01T00:00:00Z');
+                (1, '', '', 'US', 'USD', 'UTC', '0', '0', '2026-01-01T00:00:00Z');
             CREATE TABLE IF NOT EXISTS SavingsGoals (
                 Id INTEGER NOT NULL CONSTRAINT PK_SavingsGoals PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL,
@@ -62,6 +63,11 @@ using (var scope = app.Services.CreateScope())
                 Color TEXT NOT NULL
             );
             """);
+        EnsureTransactionColumn(context, "IsRecurring", "INTEGER NOT NULL DEFAULT 0");
+        EnsureTransactionColumn(context, "RecurrenceDay", "INTEGER NULL");
+        EnsureTransactionColumn(context, "NextOccurrence", "TEXT NULL");
+        EnsureTransactionColumn(context, "AnomalyStatus", "TEXT NULL");
+        EnsureProfileColumn(context, "AutoGoalAllocationPercent", "TEXT NOT NULL DEFAULT '0'");
     }
     catch (Exception ex)
     {
@@ -69,6 +75,53 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+static void EnsureTransactionColumn(AppDbContext context, string columnName, string definition)
+    {
+        using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "PRAGMA table_info(Transactions)";
+        context.Database.OpenConnection();
+        var exists = false;
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!exists)
+            context.Database.ExecuteSqlRaw($"ALTER TABLE Transactions ADD COLUMN {columnName} {definition}");
+
+        context.Database.CloseConnection();
+    }
+
+static void EnsureProfileColumn(AppDbContext context, string columnName, string definition)
+    {
+        using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "PRAGMA table_info(UserProfiles)";
+        context.Database.OpenConnection();
+        var exists = false;
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!exists)
+            context.Database.ExecuteSqlRaw($"ALTER TABLE UserProfiles ADD COLUMN {columnName} {definition}");
+
+        context.Database.CloseConnection();
+    }
 app.UseCors();
 
 if (app.Environment.IsDevelopment())

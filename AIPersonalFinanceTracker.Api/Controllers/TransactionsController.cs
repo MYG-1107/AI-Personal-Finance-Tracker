@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
 
@@ -12,6 +14,8 @@ public class TransactionCreateDto
     public decimal Amount { get; set; }
     public int? CategoryId { get; set; }
     public DateTime? Date { get; set; }
+    public bool IsRecurring { get; set; }
+    public int? RecurrenceDay { get; set; }
 }
 
 [ApiController]
@@ -62,7 +66,12 @@ public class TransactionsController : ControllerBase
                 Description = desc,
                 Amount = amt,
                 Date = dto?.Date ?? DateTime.UtcNow,
-                CategoryId = catId
+                CategoryId = catId,
+                IsRecurring = dto.IsRecurring,
+                RecurrenceDay = dto.RecurrenceDay,
+                NextOccurrence = dto.IsRecurring
+                    ? (dto.Date ?? DateTime.UtcNow).AddMonths(1)
+                    : null
             };
 
             if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
@@ -79,12 +88,89 @@ public class TransactionsController : ControllerBase
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
 
+            if (transaction.Amount > 0)
+            {
+                var allocationPercent = await _context.UserProfiles
+                    .Where(p => p.Id == 1)
+                    .Select(p => p.AutoGoalAllocationPercent)
+                    .SingleOrDefaultAsync();
+                var activeGoals = await _context.SavingsGoals
+                    .Where(g => g.CurrentAmount < g.TargetAmount)
+                    .ToListAsync();
+                var allocation = Math.Min(transaction.Amount * allocationPercent / 100m,
+                    activeGoals.Sum(g => Math.Max(0, g.TargetAmount - g.CurrentAmount)));
+                if (allocation > 0 && activeGoals.Count > 0)
+                {
+                    var remaining = allocation;
+                    foreach (var goal in activeGoals)
+                    {
+                        var contribution = Math.Min(
+                            Math.Round(allocation / activeGoals.Count, 2),
+                            goal.TargetAmount - goal.CurrentAmount);
+                        contribution = Math.Min(contribution, remaining);
+                        goal.CurrentAmount += contribution;
+                        remaining -= contribution;
+                    }
+
+                    if (remaining > 0)
+                    {
+                        var first = activeGoals.First();
+                        first.CurrentAmount = Math.Min(first.TargetAmount, first.CurrentAmount + remaining);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             return Ok(transaction);
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = ex.Message });
         }
+    }
+
+    [HttpPost("smart-add")]
+    public ActionResult<SmartAddPreview> SmartAdd(SmartAddRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Text))
+            return BadRequest(new { message = "Describe the transaction first." });
+
+        var text = request.Text.Trim();
+        var amountMatch = Regex.Match(text, @"(?<amount>\d+(?:[.,]\d{1,2})?)");
+        if (!amountMatch.Success ||
+            !decimal.TryParse(amountMatch.Groups["amount"].Value.Replace(',', '.'),
+                NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) ||
+            amount <= 0)
+            return BadRequest(new { message = "Include a positive amount, for example 'spent 450 INR on groceries'." });
+
+        var currencyMatch = Regex.Match(text, @"\b(USD|INR|EUR|GBP|NOK|SEK|CAD|AUD|JPY|CHF|AED|BRL)\b", RegexOptions.IgnoreCase);
+        var currency = currencyMatch.Success ? currencyMatch.Value.ToUpperInvariant() : "USD";
+        var date = text.Contains("yesterday", StringComparison.OrdinalIgnoreCase)
+            ? DateTime.UtcNow.Date.AddDays(-1)
+            : DateTime.UtcNow;
+        var description = Regex.Replace(text, @"\b(spent|paid|bought|purchase|on|for|today|yesterday)\b", "", RegexOptions.IgnoreCase)
+            .Trim(' ', ',', '.', ':');
+        var categoryId = _categoryPredictor.PredictCategory(description);
+
+        return Ok(new SmartAddPreview
+        {
+            Description = description,
+            Amount = -amount,
+            CurrencyCode = currency,
+            Date = date,
+            SuggestedCategoryId = categoryId > 0 ? categoryId : null,
+            SuggestedCategoryName = categoryId switch
+            {
+                1 => "Groceries & Food",
+                2 => "Utilities & Bills",
+                3 => "Salary & Income",
+                4 => "Entertainment",
+                5 => "Transport & Travel",
+                _ => "Uncategorized"
+            },
+            Message = "Review the parsed fields before saving."
+        });
     }
 
     [HttpDelete("{id:int}")]
