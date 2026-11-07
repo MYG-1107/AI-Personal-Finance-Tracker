@@ -280,7 +280,7 @@
                 CategoryId = selectedCategoryId ?? predictedCategoryId,
                 Date = DateTime.UtcNow,
                 IsRecurring = isRecurring,
-                RecurrenceDay = isRecurring ? Math.Clamp(recurrenceDay, 1, 31) : null
+                RecurrenceDay = isRecurring ? (int?)Math.Clamp(recurrenceDay, 1, 31) : null
             };
 
             var response = await Http.PostAsJsonAsync("api/transactions", payload);
