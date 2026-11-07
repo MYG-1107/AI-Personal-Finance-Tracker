@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AIPersonalFinanceTracker.Shared.Models;
-using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.ML;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
@@ -18,11 +16,10 @@ public class TransactionCreateDto
 [Route("api/[controller]")]
 public class TransactionsController : ControllerBase
 {
-    private readonly AppDbContext? _context;
     private readonly CategoryPredictorService _categoryPredictor;
     private readonly AnomalyDetectionService _anomalyDetector;
 
-    private static readonly List<Transaction> _fallbackTransactions = new()
+    private static readonly List<Transaction> _sharedTransactions = new()
     {
         new Transaction { Id = 1, Description = "Monthly Salary Direct Deposit", Amount = 5000.00m, Date = DateTime.UtcNow.AddDays(-10), CategoryId = 3, IsAutoCategorized = true, IsAnomaly = false },
         new Transaction { Id = 2, Description = "Target Home Goods & Groceries", Amount = -120.45m, Date = DateTime.UtcNow.AddDays(-5), CategoryId = 1, IsAutoCategorized = true, IsAnomaly = false },
@@ -31,42 +28,29 @@ public class TransactionsController : ControllerBase
         new Transaction { Id = 5, Description = "Uber Trip to Airport", Amount = -150.00m, Date = DateTime.UtcNow.AddDays(-1), CategoryId = 5, IsAutoCategorized = true, IsAnomaly = true, AnomalyReason = "High Expense Spike" }
     };
 
-    public TransactionsController(AppDbContext? context, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
+    private static readonly object _lock = new();
+
+    public TransactionsController(CategoryPredictorService? categoryPredictor = null, AnomalyDetectionService? anomalyDetector = null)
     {
-        _context = context;
         _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
         _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
     }
 
-    public TransactionsController(CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
-        : this(null, categoryPredictor, anomalyDetector) { }
+    // Support EF Core DI constructor overload if injected
+    public TransactionsController(object? dbContext, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
+        : this(categoryPredictor, anomalyDetector) { }
 
     [HttpGet]
-    public async Task<IActionResult> GetTransactions()
+    public IActionResult GetTransactions()
     {
-        try
+        lock (_lock)
         {
-            if (_context != null)
-            {
-                // Ensure database is created if not already
-                await _context.Database.EnsureCreatedAsync();
-                if (_context.Transactions != null)
-                {
-                    var txs = await _context.Transactions.AsNoTracking().ToListAsync();
-                    if (txs != null && txs.Count > 0) return Ok(txs);
-                }
-            }
+            return Ok(_sharedTransactions.OrderByDescending(t => t.Date).ToList());
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"DB Read Notice: {ex.Message}");
-        }
-
-        return Ok(_fallbackTransactions);
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddTransaction([FromBody] TransactionCreateDto dto)
+    public IActionResult AddTransaction([FromBody] TransactionCreateDto dto)
     {
         try
         {
@@ -93,34 +77,22 @@ public class TransactionsController : ControllerBase
             transaction.IsAnomaly = anomaly.IsAnomaly;
             transaction.AnomalyReason = anomaly.Reason;
 
-            try
+            lock (_lock)
             {
-                if (_context != null && _context.Transactions != null)
-                {
-                    await _context.Database.EnsureCreatedAsync();
-                    _context.Transactions.Add(transaction);
-                    await _context.SaveChangesAsync();
-                    return Ok(transaction);
-                }
+                transaction.Id = _sharedTransactions.Count > 0 ? _sharedTransactions.Max(t => t.Id) + 1 : 1;
+                _sharedTransactions.Add(transaction);
             }
-            catch (Exception dbEx)
-            {
-                Console.WriteLine($"DB Save Error: {dbEx.Message}");
-            }
-
-            transaction.Id = _fallbackTransactions.Count > 0 ? _fallbackTransactions.Max(t => t.Id) + 1 : 1;
-            _fallbackTransactions.Add(transaction);
 
             return Ok(transaction);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = ex.Message, stackTrace = ex.StackTrace });
+            return StatusCode(500, new { message = ex.Message });
         }
     }
 
     [NonAction]
-    public async Task<IActionResult> AddTransaction(Transaction transaction)
+    public IActionResult AddTransaction(Transaction transaction)
     {
         if (transaction == null) return BadRequest("Transaction required.");
         var dto = new TransactionCreateDto
@@ -130,12 +102,12 @@ public class TransactionsController : ControllerBase
             CategoryId = transaction.CategoryId,
             Date = transaction.Date
         };
-        return await AddTransaction(dto);
+        return AddTransaction(dto);
     }
 
     [NonAction]
-    public async Task<IActionResult> PostTransaction(Transaction transaction)
+    public IActionResult PostTransaction(Transaction transaction)
     {
-        return await AddTransaction(transaction);
+        return AddTransaction(transaction);
     }
 }
