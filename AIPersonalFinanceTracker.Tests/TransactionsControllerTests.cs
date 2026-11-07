@@ -26,9 +26,9 @@ public class TransactionsControllerTests
     }
 
     [Fact]
-    public void GetTransactions_ReturnsOkResult()
+    public async Task GetTransactions_ReturnsOkResult()
     {
-        var result = _controller.GetTransactions();
+        var result = await _controller.GetTransactions();
         Assert.NotNull(result);
     }
 
@@ -36,7 +36,7 @@ public class TransactionsControllerTests
     public void AddTransaction_AddsNewTransaction()
     {
         var tx = new Transaction { Description = "Starbucks", Amount = -5.00m };
-        var result = _controller.AddTransaction(tx).GetAwaiter().GetResult();
+        var result = _controller.AddTransaction(tx);
         Assert.NotNull(result);
     }
 
@@ -49,13 +49,13 @@ public class TransactionsControllerTests
     }
 
     [Fact]
-    public void AddTransaction_RejectsZeroAmount()
+    public async Task AddTransaction_RejectsZeroAmount()
     {
-        var result = _controller.AddTransaction(new TransactionCreateDto
+        var result = await _controller.AddTransaction(new TransactionCreateDto
         {
             Description = "Bike",
             Amount = 0
-        }).GetAwaiter().GetResult();
+        });
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
