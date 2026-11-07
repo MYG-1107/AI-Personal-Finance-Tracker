@@ -31,7 +31,6 @@ public class TransactionsController : ControllerBase
         new Transaction { Id = 5, Description = "Uber Trip to Airport", Amount = -150.00m, Date = DateTime.UtcNow.AddDays(-1), CategoryId = 5, IsAutoCategorized = true, IsAnomaly = true, AnomalyReason = "High Expense Spike" }
     };
 
-    // Primary constructor for Entity Framework Core dependency injection
     public TransactionsController(AppDbContext? context, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
     {
         _context = context;
@@ -39,7 +38,6 @@ public class TransactionsController : ControllerBase
         _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
     }
 
-    // Overload constructor for Unit Tests expecting (CategoryPredictorService, AnomalyDetectionService)
     public TransactionsController(CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
         : this(null, categoryPredictor, anomalyDetector) { }
 
@@ -48,10 +46,15 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            if (_context != null && _context.Transactions != null)
+            if (_context != null)
             {
-                var txs = await _context.Transactions.AsNoTracking().ToListAsync();
-                if (txs != null && txs.Count > 0) return Ok(txs);
+                // Ensure database is created if not already
+                await _context.Database.EnsureCreatedAsync();
+                if (_context.Transactions != null)
+                {
+                    var txs = await _context.Transactions.AsNoTracking().ToListAsync();
+                    if (txs != null && txs.Count > 0) return Ok(txs);
+                }
             }
         }
         catch (Exception ex)
@@ -94,6 +97,7 @@ public class TransactionsController : ControllerBase
             {
                 if (_context != null && _context.Transactions != null)
                 {
+                    await _context.Database.EnsureCreatedAsync();
                     _context.Transactions.Add(transaction);
                     await _context.SaveChangesAsync();
                     return Ok(transaction);
