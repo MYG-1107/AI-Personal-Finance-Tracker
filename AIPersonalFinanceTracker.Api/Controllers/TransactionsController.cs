@@ -31,13 +31,15 @@ public class TransactionsController : ControllerBase
         new Transaction { Id = 5, Description = "Uber Trip to Airport", Amount = -150.00m, Date = DateTime.UtcNow.AddDays(-1), CategoryId = 5, IsAutoCategorized = true, IsAnomaly = true, AnomalyReason = "High Expense Spike" }
     };
 
-    public TransactionsController(AppDbContext? context = null, CategoryPredictorService? categoryPredictor = null, AnomalyDetectionService? anomalyDetector = null)
+    // Primary constructor for Entity Framework Core dependency injection
+    public TransactionsController(AppDbContext? context, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
     {
         _context = context;
         _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
         _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
     }
 
+    // Overload constructor for Unit Tests expecting (CategoryPredictorService, AnomalyDetectionService)
     public TransactionsController(CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
         : this(null, categoryPredictor, anomalyDetector) { }
 
@@ -63,54 +65,60 @@ public class TransactionsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddTransaction([FromBody] TransactionCreateDto dto)
     {
-        var desc = dto?.Description ?? "Unspecified";
-        var amt = dto?.Amount ?? 0m;
-        var catId = dto?.CategoryId;
-
-        var transaction = new Transaction
-        {
-            Description = desc,
-            Amount = amt,
-            Date = dto?.Date ?? DateTime.UtcNow,
-            CategoryId = catId
-        };
-
-        if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
-        {
-            var predId = _categoryPredictor.PredictCategory(transaction.Description);
-            transaction.CategoryId = predId > 0 ? predId : 1;
-            transaction.IsAutoCategorized = true;
-        }
-
-        var anomaly = _anomalyDetector.DetectAnomaly(transaction);
-        transaction.IsAnomaly = anomaly.IsAnomaly;
-        transaction.AnomalyReason = anomaly.Reason;
-
         try
         {
-            if (_context != null && _context.Transactions != null)
+            var desc = string.IsNullOrWhiteSpace(dto?.Description) ? "Unspecified Transaction" : dto.Description;
+            var amt = dto?.Amount ?? 0m;
+            var catId = dto?.CategoryId;
+
+            var transaction = new Transaction
             {
-                _context.Transactions.Add(transaction);
-                await _context.SaveChangesAsync();
-                return Ok(transaction);
+                Description = desc,
+                Amount = amt,
+                Date = dto?.Date ?? DateTime.UtcNow,
+                CategoryId = catId
+            };
+
+            if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
+            {
+                var predId = _categoryPredictor.PredictCategory(transaction.Description);
+                transaction.CategoryId = predId > 0 ? predId : 1;
+                transaction.IsAutoCategorized = true;
             }
+
+            var anomaly = _anomalyDetector.DetectAnomaly(transaction);
+            transaction.IsAnomaly = anomaly.IsAnomaly;
+            transaction.AnomalyReason = anomaly.Reason;
+
+            try
+            {
+                if (_context != null && _context.Transactions != null)
+                {
+                    _context.Transactions.Add(transaction);
+                    await _context.SaveChangesAsync();
+                    return Ok(transaction);
+                }
+            }
+            catch (Exception dbEx)
+            {
+                Console.WriteLine($"DB Save Error: {dbEx.Message}");
+            }
+
+            transaction.Id = _fallbackTransactions.Count > 0 ? _fallbackTransactions.Max(t => t.Id) + 1 : 1;
+            _fallbackTransactions.Add(transaction);
+
+            return Ok(transaction);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DB Save Notice: {ex.Message}");
+            return StatusCode(500, new { message = ex.Message, stackTrace = ex.StackTrace });
         }
-
-        transaction.Id = _fallbackTransactions.Count > 0 ? _fallbackTransactions.Max(t => t.Id) + 1 : 1;
-        _fallbackTransactions.Add(transaction);
-
-        return Ok(transaction);
     }
 
     [NonAction]
     public async Task<IActionResult> AddTransaction(Transaction transaction)
     {
         if (transaction == null) return BadRequest("Transaction required.");
-        
         var dto = new TransactionCreateDto
         {
             Description = transaction.Description,

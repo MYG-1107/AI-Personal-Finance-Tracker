@@ -1,5 +1,6 @@
 @page "/transactions"
 @using System.Net.Http.Json
+@using AIPersonalFinanceTracker.Shared.Models
 @inject HttpClient Http
 
 <PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
@@ -10,142 +11,137 @@
         <a href="/" class="btn btn-outline-primary">← Back to Dashboard</a>
     </div>
 
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error:</strong> @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+        </div>
+    }
+
     <!-- Transaction Entry Form -->
     <div class="card shadow-sm border-0 p-4 mb-4">
         <h5 class="fw-bold mb-3">Add New Transaction</h5>
         <div class="row g-3">
             <div class="col-md-5">
                 <label for="tx-description" class="form-label fw-semibold">Description</label>
-                <input id="tx-description" name="description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
+                <input id="tx-description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
             </div>
             <div class="col-md-3">
                 <label for="tx-amount" class="form-label fw-semibold">Amount ($)</label>
-                <input id="tx-amount" name="amount" type="number" step="0.01" class="form-control" @bind="newAmount" placeholder="Negative for Expense (e.g., -45.00)" />
+                <input id="tx-amount" type="number" step="0.01" class="form-control" @bind="newAmount" placeholder="Negative for Expense (e.g., -45.00)" />
             </div>
             <div class="col-md-4">
                 <label for="tx-category" class="form-label fw-semibold">Category (ML Suggested)</label>
-                <select id="tx-category" name="categoryId" class="form-select" @bind="selectedCategoryId">
-                    <option value="0">Auto-Categorize via ML</option>
-                    @if (Categories != null)
-                    {
-                        @foreach (var c in Categories)
-                        {
-                            <option value="@c.Id">@c.Name (@c.Type)</option>
-                        }
-                    }
+                <select id="tx-category" class="form-select" @bind="selectedCategoryId">
+                    <option value="">Auto-Categorize via ML</option>
+                    <option value="1">Groceries & Food</option>
+                    <option value="2">Utilities & Bills</option>
+                    <option value="3">Salary & Income</option>
+                    <option value="4">Entertainment</option>
+                    <option value="5">Transport & Travel</option>
                 </select>
-                @if (!string.IsNullOrEmpty(predictedCategoryName))
+                @if (predictedCategoryId > 0)
                 {
-                    <div class="form-text text-primary fw-semibold mt-1">
-                        🤖 Predicted Category: <strong>@predictedCategoryName</strong>
-                    </div>
+                    <small class="text-muted mt-1 d-block">
+                        🤖 Predicted Category: <strong>@GetCategoryName(predictedCategoryId)</strong>
+                    </small>
                 }
             </div>
-            <div class="col-12 text-end">
-                <button class="btn btn-success px-4 fw-semibold" @onclick="SubmitTransaction" disabled="@isSubmitting">
-                    @(isSubmitting ? "Processing..." : "Add Transaction")
-                </button>
-            </div>
         </div>
-
-        @if (!string.IsNullOrEmpty(alertMessage))
-        {
-            <div class="alert @(isAnomalyAlert ? "alert-warning" : "alert-success") alert-dismissible fade show mt-3 mb-0" role="alert">
-                <strong>@(isAnomalyAlert ? "⚠️ Anomaly Alert:" : "✅ Success!")</strong> @alertMessage
-                <button type="button" class="btn-close" @onclick="() => alertMessage = null"></button>
-            </div>
-        }
+        <div class="mt-3">
+            <button class="btn btn-success px-4 fw-semibold" @onclick="SaveTransaction">Add Transaction</button>
+        </div>
     </div>
 
-    <!-- Transaction History -->
+    <!-- Transaction History Table -->
     <div class="card shadow-sm border-0 p-4">
         <h5 class="fw-bold mb-3">Transaction History</h5>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Category</th>
-                        <th>ML Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (TransactionList != null && TransactionList.Any())
-                    {
-                        @foreach (var t in TransactionList.OrderByDescending(x => x.Date))
+        @if (transactions == null)
+        {
+            <p class="text-muted">Loading transactions...</p>
+        }
+        else if (!transactions.Any())
+        {
+            <p class="text-muted">No transactions recorded yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>ML Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tx in transactions.OrderByDescending(t => t.Date))
                         {
                             <tr>
-                                <td>@t.Date.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td class="fw-semibold">@t.Description</td>
-                                <td class="@(t.Amount < 0 ? "text-danger fw-bold" : "text-success fw-bold")">
-                                    @(t.Amount < 0 ? "-" : "+")$@Math.Abs(t.Amount).ToString("N2")
+                                <td>@tx.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="fw-semibold">@tx.Description</td>
+                                <td class="@(tx.Amount >= 0 ? "text-success" : "text-danger") fw-bold">
+                                    @(tx.Amount >= 0 ? "+" : "")$@tx.Amount.ToString("N2")
                                 </td>
+                                <td><span class="badge bg-secondary">@GetCategoryName(tx.CategoryId)</span></td>
                                 <td>
-                                    <span class="badge bg-secondary">
-                                        @(GetCategoryName(t.CategoryId))
-                                    </span>
-                                </td>
-                                <td>
-                                    @if (t.IsAnomaly)
+                                    @if (tx.IsAnomaly)
                                     {
-                                        <span class="badge bg-danger" title="@t.AnomalyReason">⚠️ Anomaly Spiked</span>
+                                        <span class="badge bg-warning text-dark" title="@tx.AnomalyReason">⚠️ Anomaly: @tx.AnomalyReason</span>
                                     }
-                                    else if (t.IsAutoCategorized)
+                                    else if (tx.IsAutoCategorized)
                                     {
                                         <span class="badge bg-info text-dark">🤖 ML Categorized</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-light text-dark">Manual</span>
+                                        <span class="badge bg-success">Standard</span>
                                     }
                                 </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No transactions recorded yet.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>
 
 @code {
+    private List<Transaction>? transactions;
     private string newDescription = "";
-    private decimal newAmount = 0m;
-    private int selectedCategoryId = 0;
-    private string? predictedCategoryName;
-    private string? alertMessage;
-    private bool isAnomalyAlert = false;
-    private bool isSubmitting = false;
-
-    private List<CategoryDto> Categories = new();
-    private List<TransactionDto> TransactionList = new();
+    private decimal newAmount = 0;
+    private int? selectedCategoryId = null;
+    private int predictedCategoryId = 0;
+    private string? errorMessage;
+    private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
+        await LoadTransactions();
     }
 
-    private async Task LoadData()
+    private async Task LoadTransactions()
     {
         try
         {
-            var catResult = await Http.GetFromJsonAsync<List<CategoryDto>>("api/categories");
-            if (catResult != null) Categories = catResult;
-
-            var txResult = await Http.GetFromJsonAsync<List<TransactionDto>>("api/transactions");
-            if (txResult != null) TransactionList = txResult;
+            transactions = await Http.GetFromJsonAsync<List<Transaction>>("api/transactions");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading data: {ex.Message}");
+            errorMessage = $"Failed to load transactions: {ex.Message}";
         }
     }
 
@@ -153,110 +149,85 @@
     {
         if (string.IsNullOrWhiteSpace(newDescription))
         {
-            predictedCategoryName = null;
+            predictedCategoryId = 0;
             return;
         }
 
-        var desc = newDescription.ToLowerInvariant();
-        if (desc.Contains("coffee") || desc.Contains("starbucks") || desc.Contains("restaurant"))
-            predictedCategoryName = "Dining Out";
-        else if (desc.Contains("target") || desc.Contains("walmart") || desc.Contains("grocer"))
-            predictedCategoryName = "Groceries";
-        else if (desc.Contains("salary") || desc.Contains("payroll") || desc.Contains("deposit"))
-            predictedCategoryName = "Salary";
-        else if (desc.Contains("uber") || desc.Contains("lyft") || desc.Contains("gas") || desc.Contains("utility"))
-            predictedCategoryName = "Utilities";
+        var lower = newDescription.ToLower();
+        if (lower.Contains("grocery") || lower.Contains("walmart") || lower.Contains("coffee") || lower.Contains("starbucks") || lower.Contains("food"))
+            predictedCategoryId = 1;
+        else if (lower.Contains("water") || lower.Contains("electric") || lower.Contains("bill") || lower.Contains("utility"))
+            predictedCategoryId = 2;
+        else if (lower.Contains("salary") || lower.Contains("deposit") || lower.Contains("income"))
+            predictedCategoryId = 3;
+        else if (lower.Contains("movie") || lower.Contains("cinema") || lower.Contains("ticket"))
+            predictedCategoryId = 4;
+        else if (lower.Contains("uber") || lower.Contains("flight") || lower.Contains("travel") || lower.Contains("trip"))
+            predictedCategoryId = 5;
         else
-            predictedCategoryName = "General";
+            predictedCategoryId = 1;
     }
 
-    private async Task SubmitTransaction()
+    private async Task SaveTransaction()
     {
-        if (string.IsNullOrWhiteSpace(newDescription) || newAmount == 0)
+        errorMessage = null;
+        successMessage = null;
+
+        if (string.IsNullOrWhiteSpace(newDescription))
         {
-            alertMessage = "Please enter a description and non-zero amount.";
-            isAnomalyAlert = true;
+            errorMessage = "Please enter a transaction description.";
             return;
         }
-
-        isSubmitting = true;
-        alertMessage = null;
-
-        var payload = new
-        {
-            Description = newDescription,
-            Amount = newAmount,
-            CategoryId = selectedCategoryId > 0 ? (int?)selectedCategoryId : null,
-            Date = DateTime.UtcNow
-        };
 
         try
         {
+            var payload = new
+            {
+                Description = newDescription,
+                Amount = newAmount,
+                CategoryId = selectedCategoryId > 0 ? selectedCategoryId : (predictedCategoryId > 0 ? predictedCategoryId : (int?)null),
+                Date = DateTime.UtcNow
+            };
+
             var response = await Http.PostAsJsonAsync("api/transactions", payload);
             if (response.IsSuccessStatusCode)
             {
-                var createdTx = await response.Content.ReadFromJsonAsync<TransactionDto>();
-                if (createdTx != null)
+                var created = await response.Content.ReadFromJsonAsync<Transaction>();
+                if (created != null)
                 {
-                    if (createdTx.IsAnomaly)
-                    {
-                        isAnomalyAlert = true;
-                        alertMessage = $"Transaction saved! Anomaly Flag: {createdTx.AnomalyReason}";
-                    }
-                    else
-                    {
-                        isAnomalyAlert = false;
-                        alertMessage = "Transaction recorded and auto-categorized!";
-                    }
+                    transactions ??= new List<Transaction>();
+                    transactions.Add(created);
+                }
+                else
+                {
+                    await LoadTransactions();
                 }
 
+                successMessage = "Transaction added and processed successfully!";
                 newDescription = "";
-                newAmount = 0m;
-                selectedCategoryId = 0;
-                predictedCategoryName = null;
-
-                await LoadData();
+                newAmount = 0;
+                selectedCategoryId = null;
+                predictedCategoryId = 0;
             }
             else
             {
-                isAnomalyAlert = true;
-                alertMessage = "Server returned an error while saving transaction.";
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Server returned error ({response.StatusCode}): {errorContent}";
             }
         }
         catch (Exception ex)
         {
-            isAnomalyAlert = true;
-            alertMessage = $"Request failed: {ex.Message}";
-        }
-        finally
-        {
-            isSubmitting = false;
+            errorMessage = $"Error saving transaction: {ex.Message}";
         }
     }
 
-    private string GetCategoryName(int? categoryId)
+    private string GetCategoryName(int? catId) => catId switch
     {
-        if (!categoryId.HasValue) return "Uncategorized";
-        var cat = Categories.FirstOrDefault(c => c.Id == categoryId.Value);
-        return cat != null ? cat.Name : "General";
-    }
-
-    public class CategoryDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Type { get; set; } = "";
-    }
-
-    public class TransactionDto
-    {
-        public int Id { get; set; }
-        public string Description { get; set; } = "";
-        public decimal Amount { get; set; }
-        public DateTime Date { get; set; }
-        public int? CategoryId { get; set; }
-        public bool IsAutoCategorized { get; set; }
-        public bool IsAnomaly { get; set; }
-        public string? AnomalyReason { get; set; }
-    }
+        1 => "Groceries & Food",
+        2 => "Utilities & Bills",
+        3 => "Salary & Income",
+        4 => "Entertainment",
+        5 => "Transport & Travel",
+        _ => "General"
+    };
 }
