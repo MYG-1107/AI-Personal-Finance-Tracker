@@ -308,32 +308,6 @@
                 isRecurring = false;
             }
 
-            private async Task ParseSmartAdd()
-            {
-                try
-                {
-                    var response = await Http.PostAsJsonAsync("api/transactions/smart-add", new SmartAddRequest { Text = smartText });
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        errorMessage = await response.Content.ReadAsStringAsync();
-                        return;
-                    }
-
-                    smartPreview = await response.Content.ReadFromJsonAsync<SmartAddPreview>();
-                    if (smartPreview != null)
-                    {
-                        newDescription = smartPreview.Description;
-                        newAmount = Math.Abs(smartPreview.Amount);
-                        transactionType = smartPreview.Amount >= 0 ? "Income" : "Expense";
-                        selectedCategoryId = smartPreview.SuggestedCategoryId;
-                        predictedCategoryId = smartPreview.SuggestedCategoryId ?? 0;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    errorMessage = $"Smart Add failed: {ex.Message}";
-                }
-            }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -343,6 +317,33 @@
         catch (Exception ex)
         {
             errorMessage = $"Error saving transaction: {ex.Message}";
+        }
+    }
+
+    private async Task ParseSmartAdd()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/transactions/smart-add", new SmartAddRequest { Text = smartText });
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            smartPreview = await response.Content.ReadFromJsonAsync<SmartAddPreview>();
+            if (smartPreview != null)
+            {
+                newDescription = smartPreview.Description;
+                newAmount = Math.Abs(smartPreview.Amount);
+                transactionType = smartPreview.Amount >= 0 ? "Income" : "Expense";
+                selectedCategoryId = smartPreview.SuggestedCategoryId;
+                predictedCategoryId = smartPreview.SuggestedCategoryId ?? 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Smart Add failed: {ex.Message}";
         }
     }
 
