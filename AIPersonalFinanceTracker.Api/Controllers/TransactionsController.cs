@@ -19,7 +19,7 @@ public class TransactionsController : ControllerBase
     private readonly CategoryPredictorService _categoryPredictor;
     private readonly AnomalyDetectionService _anomalyDetector;
 
-    private static readonly List<Transaction> _sharedTransactions = new()
+    private static readonly List<Transaction> _transactionsStore = new()
     {
         new Transaction { Id = 1, Description = "Monthly Salary Direct Deposit", Amount = 5000.00m, Date = DateTime.UtcNow.AddDays(-10), CategoryId = 3, IsAutoCategorized = true, IsAnomaly = false },
         new Transaction { Id = 2, Description = "Target Home Goods & Groceries", Amount = -120.45m, Date = DateTime.UtcNow.AddDays(-5), CategoryId = 1, IsAutoCategorized = true, IsAnomaly = false },
@@ -36,7 +36,6 @@ public class TransactionsController : ControllerBase
         _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
     }
 
-    // Support EF Core DI constructor overload if injected
     public TransactionsController(object? dbContext, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
         : this(categoryPredictor, anomalyDetector) { }
 
@@ -45,7 +44,7 @@ public class TransactionsController : ControllerBase
     {
         lock (_lock)
         {
-            return Ok(_sharedTransactions.OrderByDescending(t => t.Date).ToList());
+            return Ok(_transactionsStore.OrderByDescending(t => t.Date).ToList());
         }
     }
 
@@ -79,8 +78,8 @@ public class TransactionsController : ControllerBase
 
             lock (_lock)
             {
-                transaction.Id = _sharedTransactions.Count > 0 ? _sharedTransactions.Max(t => t.Id) + 1 : 1;
-                _sharedTransactions.Add(transaction);
+                transaction.Id = _transactionsStore.Count > 0 ? _transactionsStore.Max(t => t.Id) + 1 : 1;
+                _transactionsStore.Add(transaction);
             }
 
             return Ok(transaction);
