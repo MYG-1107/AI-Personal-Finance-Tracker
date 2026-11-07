@@ -22,14 +22,16 @@ public static class TransactionCategoryClassifier
             return new(2, "Utilities & Bills");
 
         if (ContainsAny(value, "uber", "lyft", "taxi", "fuel", "petrol", "gasoline", "gas",
-                "gas station", "parking", "toll", "flight", "airline", "travel", "trip"))
+                "gas station", "parking", "toll", "flight", "airline", "travel", "trip",
+                "bike", "bicycle", "car", "vehicle", "bus", "train"))
             return new(5, "Transport & Travel");
 
         if (ContainsAny(value, "movie", "cinema", "ticket", "netflix", "spotify", "concert", "game"))
             return new(4, "Entertainment");
 
         if (ContainsAny(value, "grocery", "groceries", "supermarket", "walmart", "target",
-                "restaurant", "cafe", "coffee", "starbucks", "dining", "food"))
+                "restaurant", "cafe", "coffee", "starbucks", "dining", "food", "fruit",
+                "grape", "produce", "bakery", "vegetable", "market"))
             return new(1, "Groceries & Food");
 
         return Unknown;

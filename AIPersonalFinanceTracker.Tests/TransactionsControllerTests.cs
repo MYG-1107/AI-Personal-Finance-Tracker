@@ -1,6 +1,8 @@
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.Api.Controllers;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
@@ -15,7 +17,12 @@ public class TransactionsControllerTests
     {
         var predictor = new CategoryPredictorService();
         var anomalyDetector = new AnomalyDetectionService();
-        _controller = new TransactionsController(predictor, anomalyDetector);
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        var context = new AppDbContext(options);
+        context.Database.EnsureCreated();
+        _controller = new TransactionsController(context, predictor, anomalyDetector);
     }
 
     [Fact]
@@ -29,7 +36,7 @@ public class TransactionsControllerTests
     public void AddTransaction_AddsNewTransaction()
     {
         var tx = new Transaction { Description = "Starbucks", Amount = -5.00m };
-        var result = _controller.AddTransaction(tx);
+        var result = _controller.AddTransaction(tx).GetAwaiter().GetResult();
         Assert.NotNull(result);
     }
 
@@ -42,9 +49,22 @@ public class TransactionsControllerTests
     }
 
     [Fact]
+    public void AddTransaction_RejectsZeroAmount()
+    {
+        var result = _controller.AddTransaction(new TransactionCreateDto
+        {
+            Description = "Bike",
+            Amount = 0
+        }).GetAwaiter().GetResult();
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
     public void DependencyInjection_CanActivateController()
     {
         var services = new ServiceCollection();
+        services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddSingleton(new CategoryPredictorService());
         services.AddSingleton(new AnomalyDetectionService());
         using var provider = services.BuildServiceProvider();

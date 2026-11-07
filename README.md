@@ -16,6 +16,8 @@ An enterprise-grade, privacy-first personal finance application built with **.NE
 - **Human-in-the-Loop Continuous Learning**: When a user manually overrides a category, the system retrains the model in real time and serializes the state to disk (`model.zip`) using thread-safe static locking (`lock (_fileLock)`).
 - **Asynchronous Non-Blocking I/O**: Processes bulk CSV transaction imports via an in-memory stream buffer (`MemoryStream`), preventing WebAssembly UI thread freeze.
 - **Enterprise Testing & Observability**: Covered by an **xUnit** integration test suite (100% pass rate) with a production health endpoint (`/health`).
+- **Persistent Transaction Workspace**: Transactions are stored in SQLite and shared consistently by the API, dashboard, forecasts, and transaction history.
+- **Practical Finance Workflow**: Search and filter transactions, delete incorrect entries, export CSV reports, validate amounts, and review AI categorization before saving.
 
 ---
 

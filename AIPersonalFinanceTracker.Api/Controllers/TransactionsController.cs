@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
 
@@ -20,54 +21,41 @@ public class TransactionsController : ControllerBase
     private readonly CategoryPredictorService _categoryPredictor;
     private readonly AnomalyDetectionService _anomalyDetector;
 
-    private static readonly List<Transaction> _transactionsStore = new()
-    {
-        new Transaction { Id = 1, Description = "Monthly Salary Direct Deposit", Amount = 5000.00m, Date = DateTime.UtcNow.AddDays(-10), CategoryId = 3, IsAutoCategorized = true, IsAnomaly = false },
-        new Transaction { Id = 2, Description = "Target Home Goods & Groceries", Amount = -120.45m, Date = DateTime.UtcNow.AddDays(-5), CategoryId = 1, IsAutoCategorized = true, IsAnomaly = false },
-        new Transaction { Id = 3, Description = "Water Utility Bill", Amount = -5.50m, Date = DateTime.UtcNow.AddDays(-3), CategoryId = 2, IsAutoCategorized = true, IsAnomaly = false },
-        new Transaction { Id = 4, Description = "Cinema Movie Tickets", Amount = -45.00m, Date = DateTime.UtcNow.AddDays(-2), CategoryId = 4, IsAutoCategorized = true, IsAnomaly = false },
-        new Transaction { Id = 5, Description = "Uber Trip to Airport", Amount = -150.00m, Date = DateTime.UtcNow.AddDays(-1), CategoryId = 5, IsAutoCategorized = true, IsAnomaly = true, AnomalyReason = "High Expense Spike" }
-    };
-
-    private static readonly object _lock = new();
-
-    // ASP.NET Core DI Constructor
-    [ActivatorUtilitiesConstructor]
     public TransactionsController(
-        IServiceProvider? serviceProvider,
+        AppDbContext context,
         CategoryPredictorService categoryPredictor,
         AnomalyDetectionService anomalyDetector)
     {
+        _context = context;
         _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
         _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
     }
 
-    // Unit Test Constructor Overload
-    public TransactionsController(
-        CategoryPredictorService categoryPredictor,
-        AnomalyDetectionService anomalyDetector)
-    {
-        _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
-        _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
-    }
+    private readonly AppDbContext _context;
 
     [HttpGet]
-    public IActionResult GetTransactions()
+    public async Task<ActionResult<List<Transaction>>> GetTransactions()
     {
-        lock (_lock)
-        {
-            return Ok(_transactionsStore.OrderByDescending(t => t.Date).ToList());
-        }
+        return Ok(await _context.Transactions
+            .AsNoTracking()
+            .OrderByDescending(t => t.Date)
+            .ToListAsync());
     }
 
     [HttpPost]
-    public IActionResult AddTransaction([FromBody] TransactionCreateDto dto)
+    public async Task<IActionResult> AddTransaction([FromBody] TransactionCreateDto dto)
     {
         try
         {
-            var desc = string.IsNullOrWhiteSpace(dto?.Description) ? "Unspecified Transaction" : dto.Description;
-            var amt = dto?.Amount ?? 0m;
-            var catId = dto?.CategoryId;
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Description))
+                return BadRequest(new { message = "A transaction description is required." });
+
+            if (dto.Amount == 0)
+                return BadRequest(new { message = "A transaction amount must be non-zero." });
+
+            var desc = dto.Description.Trim();
+            var amt = dto.Amount;
+            var catId = dto.CategoryId;
 
             var transaction = new Transaction
             {
@@ -88,11 +76,8 @@ public class TransactionsController : ControllerBase
             transaction.IsAnomaly = anomaly.IsAnomaly;
             transaction.AnomalyReason = anomaly.Reason;
 
-            lock (_lock)
-            {
-                transaction.Id = _transactionsStore.Count > 0 ? _transactionsStore.Max(t => t.Id) + 1 : 1;
-                _transactionsStore.Add(transaction);
-            }
+            _context.Transactions.Add(transaction);
+            await _context.SaveChangesAsync();
 
             return Ok(transaction);
         }
@@ -100,6 +85,36 @@ public class TransactionsController : ControllerBase
         {
             return StatusCode(500, new { message = ex.Message });
         }
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteTransaction(int id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+            return NotFound(new { message = "Transaction not found." });
+
+        _context.Transactions.Remove(transaction);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPut("{id:int}/category/{categoryId:int}")]
+    public async Task<IActionResult> UpdateCategory(int id, int categoryId)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+            return NotFound(new { message = "Transaction not found." });
+
+        if (!await _context.Categories.AnyAsync(c => c.Id == categoryId))
+            return BadRequest(new { message = "Category not found." });
+
+        transaction.CategoryId = categoryId;
+        transaction.IsAutoCategorized = false;
+        transaction.IsAnomaly = false;
+        transaction.AnomalyReason = null;
+        await _context.SaveChangesAsync();
+        return Ok(transaction);
     }
 
     [NonAction]
@@ -113,7 +128,7 @@ public class TransactionsController : ControllerBase
             CategoryId = transaction.CategoryId,
             Date = transaction.Date
         };
-        return AddTransaction(dto);
+        return AddTransaction(dto).GetAwaiter().GetResult();
     }
 
     [NonAction]

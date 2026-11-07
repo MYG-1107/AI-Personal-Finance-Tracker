@@ -184,6 +184,7 @@
             totalBalance = transactions.Sum(t => t.Amount);
 
             var spendingMap = transactions
+                .Where(t => t.Amount < 0)
                 .Where(t => t.CategoryId != null)
                 .GroupBy(t => t.CategoryId!.Value)
                 .ToDictionary(g => g.Key, g => g.Sum(t => Math.Abs(t.Amount)));
@@ -193,7 +194,7 @@
                 .Select(c => new CategorySpending
                 {
                     CategoryName = c.Name,
-                    Budget = c.BudgetLimit,
+                    Budget = c.MonthlyBudgetLimit > 0 ? c.MonthlyBudgetLimit : c.BudgetLimit,
                     Spent = spendingMap.TryGetValue(c.Id, out var spent) ? spent : 0
                 })
                 .ToList();

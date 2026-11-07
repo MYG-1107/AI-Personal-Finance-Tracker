@@ -32,6 +32,7 @@ public class CategorizationServiceTests
     [InlineData("gas", 5)]
     [InlineData("gas bill", 2)]
     [InlineData("Uber ride", 5)]
+    [InlineData("Bike purchase", 5)]
     [InlineData("Cinema tickets", 4)]
     public void PredictCategory_UsesSpecificCategoryRules(string description, int expectedCategoryId)
     {
