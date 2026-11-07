@@ -118,7 +118,7 @@ public class TransactionsController : ControllerBase
     }
 
     [NonAction]
-    public IActionResult AddTransaction(Transaction transaction)
+    public async Task<IActionResult> AddTransaction(Transaction transaction)
     {
         if (transaction == null) return BadRequest("Transaction required.");
         var dto = new TransactionCreateDto
@@ -128,12 +128,12 @@ public class TransactionsController : ControllerBase
             CategoryId = transaction.CategoryId,
             Date = transaction.Date
         };
-        return AddTransaction(dto).GetAwaiter().GetResult();
+        return await AddTransaction(dto);
     }
 
     [NonAction]
-    public IActionResult PostTransaction(Transaction transaction)
+    public async Task<IActionResult> PostTransaction(Transaction transaction)
     {
-        return AddTransaction(transaction);
+        return await AddTransaction(transaction);
     }
 }

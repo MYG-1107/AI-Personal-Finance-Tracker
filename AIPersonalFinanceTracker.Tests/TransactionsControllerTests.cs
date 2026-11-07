@@ -33,18 +33,18 @@ public class TransactionsControllerTests
     }
 
     [Fact]
-    public void AddTransaction_AddsNewTransaction()
+    public async Task AddTransaction_AddsNewTransaction()
     {
         var tx = new Transaction { Description = "Starbucks", Amount = -5.00m };
-        var result = _controller.AddTransaction(tx);
+        var result = await _controller.AddTransaction(tx);
         Assert.NotNull(result);
     }
 
     [Fact]
-    public void PostTransaction_AddsNewTransaction()
+    public async Task PostTransaction_AddsNewTransaction()
     {
         var tx = new Transaction { Description = "Target Store", Amount = -45.00m };
-        var result = _controller.PostTransaction(tx);
+        var result = await _controller.PostTransaction(tx);
         Assert.NotNull(result);
     }
 
