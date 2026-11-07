@@ -30,14 +30,24 @@ public class TransactionsController : ControllerBase
 
     private static readonly object _lock = new();
 
-    public TransactionsController(CategoryPredictorService? categoryPredictor = null, AnomalyDetectionService? anomalyDetector = null)
+    // ASP.NET Core DI Constructor
+    public TransactionsController(
+        IServiceProvider? serviceProvider,
+        CategoryPredictorService categoryPredictor,
+        AnomalyDetectionService anomalyDetector)
     {
         _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
         _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
     }
 
-    public TransactionsController(object? dbContext, CategoryPredictorService categoryPredictor, AnomalyDetectionService anomalyDetector)
-        : this(categoryPredictor, anomalyDetector) { }
+    // Unit Test Constructor Overload
+    public TransactionsController(
+        CategoryPredictorService categoryPredictor,
+        AnomalyDetectionService anomalyDetector)
+    {
+        _categoryPredictor = categoryPredictor ?? new CategoryPredictorService();
+        _anomalyDetector = anomalyDetector ?? new AnomalyDetectionService();
+    }
 
     [HttpGet]
     public IActionResult GetTransactions()
