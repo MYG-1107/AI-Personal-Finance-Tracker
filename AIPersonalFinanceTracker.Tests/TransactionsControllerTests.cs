@@ -1,5 +1,6 @@
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using AIPersonalFinanceTracker.Api.Controllers;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
@@ -38,5 +39,18 @@ public class TransactionsControllerTests
         var tx = new Transaction { Description = "Target Store", Amount = -45.00m };
         var result = _controller.PostTransaction(tx);
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void DependencyInjection_CanActivateController()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(new CategoryPredictorService());
+        services.AddSingleton(new AnomalyDetectionService());
+        using var provider = services.BuildServiceProvider();
+
+        var controller = ActivatorUtilities.CreateInstance<TransactionsController>(provider);
+
+        Assert.IsType<TransactionsController>(controller);
     }
 }

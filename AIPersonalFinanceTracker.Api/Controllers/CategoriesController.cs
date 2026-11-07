@@ -39,7 +39,7 @@ public class CategoriesController : ControllerBase
             new Category { Id = 2, Name = "Utilities", Type = "Expense", MonthlyBudgetLimit = 200m },
             new Category { Id = 3, Name = "Salary", Type = "Income", MonthlyBudgetLimit = 0m },
             new Category { Id = 4, Name = "Entertainment", Type = "Expense", MonthlyBudgetLimit = 150m },
-            new Category { Id = 5, Name = "Dining Out", Type = "Expense", MonthlyBudgetLimit = 300m }
+            new Category { Id = 5, Name = "Transport & Travel", Type = "Expense", MonthlyBudgetLimit = 300m }
         });
     }
 }

@@ -1,5 +1,6 @@
 @page "/transactions"
 @using System.Net.Http.Json
+@using AIPersonalFinanceTracker.Shared
 @using AIPersonalFinanceTracker.Shared.Models
 @inject HttpClient Http
 
@@ -53,6 +54,12 @@
                 {
                     <small class="text-muted mt-1 d-block">
                         🤖 Predicted Category: <strong>@GetCategoryName(predictedCategoryId)</strong>
+                    </small>
+                }
+                else if (!string.IsNullOrWhiteSpace(newDescription))
+                {
+                    <small class="text-warning mt-1 d-block">
+                        ⚠️ No confident prediction. Please select a category.
                     </small>
                 }
             </div>
@@ -153,19 +160,7 @@
             return;
         }
 
-        var lower = newDescription.ToLower();
-        if (lower.Contains("grocery") || lower.Contains("walmart") || lower.Contains("coffee") || lower.Contains("starbucks") || lower.Contains("food"))
-            predictedCategoryId = 1;
-        else if (lower.Contains("water") || lower.Contains("electric") || lower.Contains("bill") || lower.Contains("utility"))
-            predictedCategoryId = 2;
-        else if (lower.Contains("salary") || lower.Contains("deposit") || lower.Contains("income"))
-            predictedCategoryId = 3;
-        else if (lower.Contains("movie") || lower.Contains("cinema") || lower.Contains("ticket"))
-            predictedCategoryId = 4;
-        else if (lower.Contains("uber") || lower.Contains("flight") || lower.Contains("travel") || lower.Contains("trip"))
-            predictedCategoryId = 5;
-        else
-            predictedCategoryId = 1;
+        predictedCategoryId = TransactionCategoryClassifier.Predict(newDescription).CategoryId;
     }
 
     private async Task SaveTransaction()
@@ -185,7 +180,7 @@
             {
                 Description = newDescription,
                 Amount = newAmount,
-                CategoryId = selectedCategoryId > 0 ? selectedCategoryId : (predictedCategoryId > 0 ? predictedCategoryId : (int?)null),
+                CategoryId = selectedCategoryId,
                 Date = DateTime.UtcNow
             };
 
@@ -228,6 +223,6 @@
         3 => "Salary & Income",
         4 => "Entertainment",
         5 => "Transport & Travel",
-        _ => "General"
+        _ => "Uncategorized"
     };
 }

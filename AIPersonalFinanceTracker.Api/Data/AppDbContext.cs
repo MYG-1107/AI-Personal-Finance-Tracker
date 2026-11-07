@@ -19,7 +19,7 @@ public class AppDbContext : DbContext
             new Category { Id = 2, Name = "Utilities", Type = "Expense", MonthlyBudgetLimit = 200.00m },
             new Category { Id = 3, Name = "Salary", Type = "Income", MonthlyBudgetLimit = 0.00m },
             new Category { Id = 4, Name = "Entertainment", Type = "Expense", MonthlyBudgetLimit = 150.00m },
-            new Category { Id = 5, Name = "Dining Out", Type = "Expense", MonthlyBudgetLimit = 300.00m }
+            new Category { Id = 5, Name = "Transport & Travel", Type = "Expense", MonthlyBudgetLimit = 300.00m }
         );
 
         modelBuilder.Entity<Transaction>().HasData(

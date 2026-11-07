@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
 
@@ -31,6 +32,7 @@ public class TransactionsController : ControllerBase
     private static readonly object _lock = new();
 
     // ASP.NET Core DI Constructor
+    [ActivatorUtilitiesConstructor]
     public TransactionsController(
         IServiceProvider? serviceProvider,
         CategoryPredictorService categoryPredictor,
@@ -78,8 +80,8 @@ public class TransactionsController : ControllerBase
             if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
             {
                 var predId = _categoryPredictor.PredictCategory(transaction.Description);
-                transaction.CategoryId = predId > 0 ? predId : 1;
-                transaction.IsAutoCategorized = true;
+                transaction.CategoryId = predId > 0 ? predId : null;
+                transaction.IsAutoCategorized = predId > 0;
             }
 
             var anomaly = _anomalyDetector.DetectAnomaly(transaction);
