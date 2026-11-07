@@ -9,10 +9,21 @@ public class AppDbContext : DbContext
 
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<UserProfile>().HasData(new UserProfile
+        {
+            Id = 1,
+            CountryCode = "US",
+            CurrencyCode = "USD",
+            TimeZone = "UTC",
+            MonthlyBudgetTarget = 0,
+            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
 
         modelBuilder.Entity<Category>().HasData(
             new Category { Id = 1, Name = "Groceries", Type = "Expense", MonthlyBudgetLimit = 500.00m },

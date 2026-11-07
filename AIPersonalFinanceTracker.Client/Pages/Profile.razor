@@ -1,0 +1,150 @@
+@page "/profile"
+@inject FinanceApiService ApiService
+@inject CurrencyService Currency
+
+<PageTitle>Profile & Preferences - AI Personal Finance Tracker</PageTitle>
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Profile & Preferences</h2>
+            <p class="text-muted mb-0">Personalize your finance workspace for your country and currency.</p>
+        </div>
+        <a href="/" class="btn btn-outline-primary">Back to Dashboard</a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 p-4">
+                    <h5 class="fw-bold mb-3">Personal details</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="display-name">Display name</label>
+                            <input id="display-name" class="form-control" @bind="profile.DisplayName" maxlength="80" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="email">Email</label>
+                            <input id="email" type="email" class="form-control" @bind="profile.Email" maxlength="160" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="country">Country code</label>
+                            <input id="country" class="form-control" @bind="profile.CountryCode" maxlength="2"
+                                   placeholder="e.g. IN, US, GB" />
+                            <small class="text-muted">Use the two-letter ISO code for your country.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="timezone">Time zone</label>
+                            <input id="timezone" class="form-control" @bind="profile.TimeZone"
+                                   placeholder="e.g. Asia/Kolkata" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="currency">Base currency</label>
+                            <select id="currency" class="form-select" @bind="profile.CurrencyCode">
+                                @foreach (var currency in Currency.Currencies)
+                                {
+                                    <option value="@currency.Code">@currency.Name</option>
+                                }
+                            </select>
+                            <small class="text-muted">Used for dashboard and transaction display.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="budget">Monthly budget target</label>
+                            <input id="budget" type="number" min="0" step="0.01" class="form-control"
+                                   @bind="profile.MonthlyBudgetTarget" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-4" @onclick="SaveProfile" disabled="@isSaving">
+                        @(isSaving ? "Saving..." : "Save preferences")
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 p-4 h-100 bg-light">
+                    <h5 class="fw-bold">Your workspace</h5>
+                    <p class="text-muted">These preferences persist in the application database and can be changed at any time.</p>
+                    <div class="border rounded bg-white p-3 mb-3">
+                        <small class="text-muted d-block">Current locale</small>
+                        <strong>@profile.CountryCode · @profile.CurrencyCode</strong>
+                    </div>
+                    <div class="border rounded bg-white p-3 mb-3">
+                        <small class="text-muted d-block">Budget target</small>
+                        <strong>@Currency.Format(profile.MonthlyBudgetTarget)</strong>
+                    </div>
+                    <div class="border rounded bg-white p-3">
+                        <small class="text-muted d-block">Last updated</small>
+                        <strong>@profile.UpdatedAt.ToLocalTime().ToString("f")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private UserProfile profile = new();
+    private bool isLoading = true;
+    private bool isSaving;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            profile = await ApiService.GetProfileAsync() ?? new UserProfile();
+            Currency.SetCurrency(profile.CurrencyCode);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Unable to load profile: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveProfile()
+    {
+        errorMessage = null;
+        successMessage = null;
+        isSaving = true;
+
+        try
+        {
+            var updated = await ApiService.UpdateProfileAsync(profile);
+            if (updated == null)
+            {
+                errorMessage = "The profile could not be saved.";
+                return;
+            }
+
+            profile = updated;
+            Currency.SetCurrency(profile.CurrencyCode);
+            successMessage = "Your preferences were saved successfully.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Unable to save profile: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

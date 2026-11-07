@@ -35,6 +35,22 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         context.Database.EnsureCreated();
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserProfiles (
+                Id INTEGER NOT NULL CONSTRAINT PK_UserProfiles PRIMARY KEY,
+                DisplayName TEXT NOT NULL,
+                Email TEXT NOT NULL,
+                CountryCode TEXT NOT NULL,
+                CurrencyCode TEXT NOT NULL,
+                TimeZone TEXT NOT NULL,
+                MonthlyBudgetTarget TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL
+            );
+            INSERT OR IGNORE INTO UserProfiles
+                (Id, DisplayName, Email, CountryCode, CurrencyCode, TimeZone, MonthlyBudgetTarget, UpdatedAt)
+            VALUES
+                (1, '', '', 'US', 'USD', 'UTC', '0', '2026-01-01T00:00:00Z');
+            """);
     }
     catch (Exception ex)
     {

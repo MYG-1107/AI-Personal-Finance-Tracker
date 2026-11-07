@@ -42,4 +42,17 @@ public class FinanceApiService
     {
         return await _http.GetFromJsonAsync<CashFlowForecastDto>("api/forecast/cashflow");
     }
+
+    public async Task<UserProfile?> GetProfileAsync()
+    {
+        return await _http.GetFromJsonAsync<UserProfile>("api/profile");
+    }
+
+    public async Task<UserProfile?> UpdateProfileAsync(UserProfile profile)
+    {
+        var response = await _http.PutAsJsonAsync("api/profile", profile);
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<UserProfile>()
+            : null;
+    }
 }

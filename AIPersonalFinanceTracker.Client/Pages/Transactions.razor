@@ -5,6 +5,7 @@
 @using AIPersonalFinanceTracker.Shared.Models
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject CurrencyService Currency
 
 <PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
 
@@ -144,7 +145,7 @@
                                 <td>@tx.Date.ToString("yyyy-MM-dd HH:mm")</td>
                                 <td class="fw-semibold">@tx.Description</td>
                                 <td class="@(tx.Amount >= 0 ? "text-success" : "text-danger") fw-bold">
-                                    @(tx.Amount >= 0 ? "+" : "")$@tx.Amount.ToString("N2")
+                                    @(tx.Amount >= 0 ? "+" : "-")@Currency.Format(tx.Amount)
                                 </td>
                                 <td><span class="badge bg-secondary">@GetCategoryName(tx.CategoryId)</span></td>
                                 <td>
