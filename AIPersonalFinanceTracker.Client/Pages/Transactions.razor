@@ -9,7 +9,7 @@
 
 <PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
 
-<div class="page-intro">
+<div class="page-intro transactions-intro">
     <div>
         <p class="eyebrow">LEDGER & AUTOMATION</p>
         <h1>Transactions</h1>
@@ -35,19 +35,24 @@
     }
 
     <!-- Transaction Entry Form -->
-    <div class="surface-panel form-panel mb-4">
+    <div class="surface-panel form-panel transaction-capture mb-4">
         <div class="panel-heading">
-            <div><p class="eyebrow mb-1">QUICK CAPTURE</p><h2>Add a transaction</h2></div>
-            <span class="panel-kicker">AI assisted</span>
+            <div><p class="eyebrow mb-1">QUICK CAPTURE</p><h2>Add a transaction</h2><p class="capture-helper mb-0">Choose the fastest way to record a payment.</p></div>
+            <span class="panel-kicker capture-status"><span class="status-dot"></span> AI assisted</span>
         </div>
-        <div class="input-group mb-3">
-            <input class="form-control" @bind="smartText" placeholder="Smart Add: Spent 450 INR on groceries at Reliance Fresh yesterday" />
-            <button class="btn btn-outline-primary" @onclick="ParseSmartAdd" disabled="@string.IsNullOrWhiteSpace(smartText)">🤖 Parse</button>
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-semibold" for="transaction-upload">Receipt or transaction history</label>
-            <InputFile id="transaction-upload" OnChange="UploadFile" accept=".txt,.csv,.json,.xlsx,image/*,application/pdf" />
-            <small class="text-muted d-block">Upload one receipt to pre-fill the form, or choose a CSV/XLSX file to import transaction history.</small>
+        <div class="capture-tools">
+            <div class="smart-add-box">
+                <label class="form-label fw-semibold" for="smart-add">Smart Add</label>
+                <div class="input-group">
+                    <input id="smart-add" class="form-control" @bind="smartText" placeholder="Spent 450 INR on groceries yesterday" />
+                    <button class="btn btn-primary" @onclick="ParseSmartAdd" disabled="@string.IsNullOrWhiteSpace(smartText)">Parse with AI</button>
+                </div>
+            </div>
+            <div class="upload-box">
+                <label class="form-label fw-semibold" for="transaction-upload">Import receipt or history</label>
+                <InputFile id="transaction-upload" OnChange="UploadFile" accept=".txt,.csv,.json,.xlsx,image/*,application/pdf" />
+                <small class="text-muted d-block">Receipt, CSV, or XLSX</small>
+            </div>
         </div>
         @if (smartPreview != null)
         {
@@ -55,7 +60,7 @@
                 <strong>@smartPreview.Amount.ToString("N2") @smartPreview.CurrencyCode</strong>
                 (@smartPreview.SuggestedCategoryName). Review the fields below and save.</div>
         }
-        <div class="row g-3 align-items-end">
+        <div class="entry-fields">
             <div class="col-md-4">
                 <label for="tx-description" class="form-label fw-semibold">Description</label>
                 <input id="tx-description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
@@ -81,31 +86,41 @@
                     <option value="Income">Income</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <label for="tx-category" class="form-label fw-semibold">Category (ML Suggested)</label>
-                <select id="tx-category" class="form-select" @bind="selectedCategoryId">
-                    <option value="">Auto-Categorize via ML</option>
-                    <option value="1">Groceries & Food</option>
-                    <option value="2">Utilities & Bills</option>
-                    <option value="3">Salary & Income</option>
-                    <option value="4">Entertainment</option>
-                    <option value="5">Transport & Travel</option>
-                </select>
-                @if (predictedCategoryId > 0)
-                {
-                    <small class="text-muted mt-1 d-block">
-                        🤖 Predicted Category: <strong>@GetCategoryName(predictedCategoryId)</strong>
-                    </small>
-                }
-                else if (!string.IsNullOrWhiteSpace(newDescription))
-                {
-                    <small class="text-warning mt-1 d-block">
-                        ⚠️ No confident prediction. Please select a category.
-                    </small>
-                }
-            </div>
+            @if (transactionType == "Expense")
+            {
+                <div class="col-md-4">
+                    <label for="tx-category" class="form-label fw-semibold">Category (ML Suggested)</label>
+                    <select id="tx-category" class="form-select" @bind="selectedCategoryId">
+                        <option value="">Auto-Categorize via ML</option>
+                        <option value="1">Groceries & Food</option>
+                        <option value="2">Utilities & Bills</option>
+                        <option value="3">Salary & Income</option>
+                        <option value="4">Entertainment</option>
+                        <option value="5">Transport & Travel</option>
+                    </select>
+                    @if (predictedCategoryId > 0)
+                    {
+                        <small class="text-muted mt-1 d-block">
+                            🤖 Predicted Category: <strong>@GetCategoryName(predictedCategoryId)</strong>
+                        </small>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(newDescription))
+                    {
+                        <small class="text-warning mt-1 d-block">
+                            ⚠️ No confident prediction. Please select a category.
+                        </small>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="col-md-4 income-category-note">
+                    <span class="form-label fw-semibold">Category</span>
+                    <p class="form-text mb-0">Optional for income. Income is tracked without a spending category.</p>
+                </div>
+            }
         </div>
-        <div class="mt-4">
+        <div class="capture-actions">
             <button class="btn btn-success px-4 fw-semibold" @onclick="SaveTransaction"
                     disabled="@(!CanSaveTransaction)">Add Transaction</button>
         </div>
@@ -337,7 +352,7 @@
             {
                 Description = newDescription,
                 Amount = transactionType == "Expense" ? -Math.Abs(newAmount) : Math.Abs(newAmount),
-                CategoryId = selectedCategoryId ?? predictedCategoryId,
+                CategoryId = transactionType == "Income" ? (int?)null : selectedCategoryId ?? predictedCategoryId,
                 Date = transactionDate,
                 IsRecurring = isRecurring,
                 RecurrenceDay = isRecurring ? (int?)Math.Clamp(recurrenceDay, 1, 31) : null
@@ -398,8 +413,8 @@
                 newDescription = smartPreview.Description;
                 newAmount = Math.Abs(smartPreview.Amount);
                 transactionType = smartPreview.Amount >= 0 ? "Income" : "Expense";
-                selectedCategoryId = smartPreview.SuggestedCategoryId;
-                predictedCategoryId = smartPreview.SuggestedCategoryId ?? 0;
+                selectedCategoryId = transactionType == "Income" ? null : smartPreview.SuggestedCategoryId;
+                predictedCategoryId = transactionType == "Income" ? 0 : smartPreview.SuggestedCategoryId ?? 0;
             }
         }
         catch (Exception ex)
@@ -473,7 +488,7 @@
     private bool CanSaveTransaction =>
         !string.IsNullOrWhiteSpace(newDescription) &&
         newAmount != 0 &&
-        (selectedCategoryId.HasValue || predictedCategoryId > 0);
+        (transactionType == "Income" || selectedCategoryId.HasValue || predictedCategoryId > 0);
 
     private string GetCategoryName(int? catId) => catId switch
     {

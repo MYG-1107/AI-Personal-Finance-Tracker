@@ -76,7 +76,7 @@ public class TransactionsController : ControllerBase
                     : null
             };
 
-            if (!transaction.CategoryId.HasValue || transaction.CategoryId == 0)
+            if (amt < 0 && (!transaction.CategoryId.HasValue || transaction.CategoryId == 0))
             {
                 var predId = _categoryPredictor.PredictCategory(transaction.Description);
                 transaction.CategoryId = predId > 0 ? predId : null;

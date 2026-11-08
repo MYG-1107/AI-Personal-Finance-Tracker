@@ -13,6 +13,7 @@
         <p class="page-subtitle">A clear view of your money, momentum, and monthly limits.</p>
     </div>
     <a class="btn btn-primary" href="/transactions">+ Add transaction</a>
+    <a class="btn btn-outline-primary" href="/advisor">Ask AI Advisor</a>
 </div>
 
 <div class="row g-3 mb-4 metric-grid">
@@ -48,7 +49,7 @@
                 </div>
                 @if (Transactions.Any(t => t.Amount < 0))
                 {
-                    <div style="height: 240px;" class="mb-3">
+                    <div style="height: 190px;" class="mb-2">
                         <canvas id="spending-chart" aria-label="Spending by category chart"></canvas>
                     </div>
                 }
