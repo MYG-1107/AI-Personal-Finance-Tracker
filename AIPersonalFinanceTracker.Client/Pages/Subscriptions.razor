@@ -1,0 +1,55 @@
+@page "/subscriptions"
+@inject FinanceApiService Api
+@inject CurrencyService Currency
+
+<PageTitle>Subscriptions - AI Personal Finance Tracker</PageTitle>
+
+<div class="page-intro">
+    <div>
+        <p class="eyebrow">FIXED COST INTELLIGENCE</p>
+        <h1>Subscription burn rate</h1>
+        <p class="page-subtitle">Recurring merchants are detected from your transaction history.</p>
+    </div>
+</div>
+
+@if (analytics is null)
+{
+    <div class="surface-panel">Loading recurring spending...</div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-6"><div class="metric-card metric-card-primary"><div class="metric-label">Monthly burn rate</div><div class="metric-value">@Currency.Format(analytics.MonthlyBurnRate)</div></div></div>
+        <div class="col-md-6"><div class="metric-card"><div class="metric-label">Annualized fixed cost</div><div class="metric-value">@Currency.Format(analytics.AnnualizedBurnRate)</div></div></div>
+    </div>
+    <div class="surface-panel">
+        <h2>Detected recurring charges</h2>
+        @if (analytics.Subscriptions.Count == 0)
+        {
+            <p class="text-muted mb-0">Add recurring or repeated transactions to identify subscriptions.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Merchant</th><th>Average charge</th><th>Monthly estimate</th><th>Next renewal</th><th>Occurrences</th></tr></thead>
+                    <tbody>
+                    @foreach (var item in analytics.Subscriptions)
+                    {
+                        <tr><td class="fw-semibold">@item.Merchant</td><td>@Currency.Format(item.AverageCharge)</td><td>@Currency.Format(item.EstimatedMonthlyCost)</td><td>@item.NextRenewal?.ToLocalTime().ToString("d")</td><td>@item.Occurrences</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private SubscriptionAnalyticsDto? analytics;
+
+    protected override async Task OnInitializedAsync()
+    {
+        analytics = await Api.GetSubscriptionsAsync();
+    }
+}

@@ -74,4 +74,21 @@ public class FinanceApiService
         var response = await _http.PostAsJsonAsync("api/advisor/ask", new AdvisorRequest { Question = question });
         return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<AdvisorResponse>() : null;
     }
+
+    public async Task<SubscriptionAnalyticsDto?> GetSubscriptionsAsync() =>
+        await _http.GetFromJsonAsync<SubscriptionAnalyticsDto>("api/subscriptions");
+
+    public async Task<List<BudgetWorkspace>> GetWorkspacesAsync(string email) =>
+        await _http.GetFromJsonAsync<List<BudgetWorkspace>>($"api/budgets?email={Uri.EscapeDataString(email)}") ?? new();
+
+    public async Task<BudgetWorkspace?> CreateWorkspaceAsync(CreateWorkspaceRequest request)
+    {
+        var response = await _http.PostAsJsonAsync("api/budgets", request);
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<BudgetWorkspace>()
+            : null;
+    }
+
+    public async Task<bool> InviteWorkspaceMemberAsync(int workspaceId, InviteWorkspaceMemberRequest request) =>
+        (await _http.PostAsJsonAsync($"api/budgets/{workspaceId}/members", request)).IsSuccessStatusCode;
 }

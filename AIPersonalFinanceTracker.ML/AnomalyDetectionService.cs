@@ -5,6 +5,7 @@ namespace AIPersonalFinanceTracker.ML;
 public class AnomalyResult
 {
     public bool IsAnomaly { get; set; }
+    public decimal Score { get; set; }
     public string Reason { get; set; } = "";
 }
 
@@ -24,9 +25,13 @@ public class AnomalyDetectionService
             .ToList();
         var amount = Math.Abs(transaction.Amount);
         var reasons = new List<string>();
+        var score = 0m;
 
         if (amount > 1000m)
-            reasons.Add("high-value transaction over $1,000");
+        {
+            reasons.Add("high-value transaction over 1,000 currency units");
+            score += 35m;
+        }
 
         if (comparableAmounts.Count >= 5)
         {
@@ -34,21 +39,33 @@ public class AnomalyDetectionService
             var variance = comparableAmounts.Sum(value => Math.Pow((double)(value - average), 2)) / comparableAmounts.Count;
             var standardDeviation = (decimal)Math.Sqrt((double)variance);
             if (standardDeviation > 0 && amount > average + (2m * standardDeviation))
+            {
                 reasons.Add("amount is more than two standard deviations above spending baseline");
+                score += 40m;
+            }
         }
 
         var sameDayCount = history.Count(item => item.Date.Date == transaction.Date.Date);
         if (sameDayCount >= 8)
+        {
             reasons.Add("unusually high transaction velocity for the day");
+            score += 15m;
+        }
 
         var hour = transaction.Date.Hour;
         if (hour < 5 || hour >= 23)
+        {
             reasons.Add("transaction occurred during an unusual spending hour");
+            score += 10m;
+        }
 
         return new AnomalyResult
         {
             IsAnomaly = reasons.Count > 0,
-            Reason = string.Join("; ", reasons)
+            Score = Math.Min(100m, score),
+            Reason = reasons.Count == 0
+                ? string.Empty
+                : $"Risk score {Math.Min(100m, score):N0}/100: {string.Join("; ", reasons)}"
         };
     }
 }

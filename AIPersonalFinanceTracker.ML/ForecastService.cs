@@ -75,7 +75,7 @@ public class ForecastService
 
             if (isOverrun)
             {
-                string warnMsg = $"Projected Overrun: '{cat.Name}' is on track to hit ${catProjected:F2} (Budget Limit: ${catLimit:F2}).";
+                string warnMsg = $"Projected Overrun: '{cat.Name}' is on track to hit {catProjected:F2} currency units (Budget Limit: {catLimit:F2}).";
                 forecast.ForecastWarnings.Add(warnMsg);
                 forecast.Insights.Add(warnMsg);
             }
@@ -83,11 +83,11 @@ public class ForecastService
 
         if (forecast.ProjectedEndOfMonthBalance < 0)
         {
-            forecast.Insights.Add("Alert: Projected balance will fall below $0 at current burn rate.");
+            forecast.Insights.Add("Alert: Projected balance will fall below zero at current burn rate.");
         }
         else
         {
-            forecast.Insights.Add($"On track: Projected end-of-month balance is ${forecast.ProjectedEndOfMonthBalance:F2}.");
+            forecast.Insights.Add($"On track: Projected end-of-month balance is {forecast.ProjectedEndOfMonthBalance:F2} currency units.");
         }
 
         return forecast;

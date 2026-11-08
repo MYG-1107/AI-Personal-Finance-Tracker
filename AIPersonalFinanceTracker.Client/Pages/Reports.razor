@@ -1,0 +1,28 @@
+@page "/reports"
+@inject NavigationManager Navigation
+
+<PageTitle>Reports - AI Personal Finance Tracker</PageTitle>
+
+<div class="page-intro">
+    <div>
+        <p class="eyebrow">EXECUTIVE REPORTING</p>
+        <h1>Financial health report</h1>
+        <p class="page-subtitle">Download a PDF summary of transactions, goals, and financial progress.</p>
+    </div>
+</div>
+
+<div class="surface-panel" style="max-width: 720px;">
+    <h2>Monthly PDF report</h2>
+    <p class="text-muted">The report is generated securely by the API using your current finance workspace.</p>
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5"><label class="form-label" for="report-year">Year</label><input id="report-year" class="form-control" type="number" @bind="year" /></div>
+        <div class="col-md-5"><label class="form-label" for="report-month">Month</label><input id="report-month" class="form-control" type="number" min="1" max="12" @bind="month" /></div>
+        <div class="col-md-2"><a class="btn btn-primary w-100" href="@DownloadUrl">PDF</a></div>
+    </div>
+</div>
+
+@code {
+    private int year = DateTime.UtcNow.Year;
+    private int month = DateTime.UtcNow.Month;
+    private string DownloadUrl => $"api/reports/monthly?year={year}&month={month}";
+}

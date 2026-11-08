@@ -1,0 +1,78 @@
+@page "/budgets"
+@inject FinanceApiService Api
+@inject IJSRuntime JS
+
+<PageTitle>Shared Budgets - AI Personal Finance Tracker</PageTitle>
+
+<div class="page-intro">
+    <div>
+        <p class="eyebrow">COLLABORATIVE WORKSPACES</p>
+        <h1>Shared budgets</h1>
+        <p class="page-subtitle">Create family or team budget spaces and invite viewers or contributors.</p>
+    </div>
+</div>
+
+<div class="surface-panel mb-4" style="max-width: 760px;">
+    <h2>Create a workspace</h2>
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5"><label class="form-label" for="workspace-name">Workspace name</label><input id="workspace-name" class="form-control" @bind="workspaceName" placeholder="Family budget" /></div>
+        <div class="col-md-5"><label class="form-label" for="workspace-email">Owner email</label><input id="workspace-email" class="form-control" type="email" @bind="ownerEmail" /></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" @onclick="Create" disabled="@busy">Create</button></div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(message)) { <div class="alert alert-info mt-3 mb-0">@message</div> }
+</div>
+
+@foreach (var workspace in workspaces)
+{
+    <div class="surface-panel mb-3">
+        <div class="d-flex justify-content-between align-items-center gap-3">
+            <div><h2 class="mb-1">@workspace.Name</h2><p class="text-muted mb-0">Owner: @workspace.OwnerEmail</p></div>
+            <span class="badge bg-primary">@workspace.Members.Count member(s)</span>
+        </div>
+        <div class="row g-2 mt-3 align-items-end">
+            <div class="col-md-5"><label class="form-label">Invite email</label><input class="form-control" @bind="inviteEmail" /></div>
+            <div class="col-md-4"><label class="form-label">Role</label><select class="form-select" @bind="inviteRole"><option>Viewer</option><option>Contributor</option></select></div>
+            <div class="col-md-3"><button class="btn btn-outline-primary w-100" @onclick="() => Invite(workspace.Id)">Invite member</button></div>
+        </div>
+    </div>
+}
+
+@code {
+    private readonly List<BudgetWorkspace> workspaces = new();
+    private string workspaceName = "";
+    private string ownerEmail = "";
+    private string inviteEmail = "";
+    private string inviteRole = "Viewer";
+    private string? message;
+    private bool busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var signedIn = await JS.InvokeAsync<string?>("sessionStorage.getItem", "finance.user");
+        if (!string.IsNullOrWhiteSpace(signedIn))
+        {
+            var account = System.Text.Json.JsonSerializer.Deserialize<AuthResponse>(signedIn);
+            ownerEmail = account?.Email ?? "";
+            workspaces.AddRange(await Api.GetWorkspacesAsync(ownerEmail));
+        }
+    }
+
+    private async Task Create()
+    {
+        if (string.IsNullOrWhiteSpace(workspaceName) || string.IsNullOrWhiteSpace(ownerEmail)) return;
+        busy = true;
+        var created = await Api.CreateWorkspaceAsync(new CreateWorkspaceRequest { Name = workspaceName, OwnerEmail = ownerEmail });
+        if (created is not null) { workspaces.Add(created); workspaceName = ""; message = "Workspace created."; }
+        busy = false;
+    }
+
+    private async Task Invite(int workspaceId)
+    {
+        if (string.IsNullOrWhiteSpace(inviteEmail)) return;
+        if (await Api.InviteWorkspaceMemberAsync(workspaceId, new InviteWorkspaceMemberRequest { Email = inviteEmail, Role = inviteRole }))
+        {
+            message = "Member added to the workspace.";
+            inviteEmail = "";
+        }
+    }
+}
