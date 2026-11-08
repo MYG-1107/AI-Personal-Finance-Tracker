@@ -63,7 +63,7 @@
         <div class="entry-fields">
             <div class="col-md-4">
                 <label for="tx-description" class="form-label fw-semibold">Description</label>
-                <input id="tx-description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
+                <input id="tx-description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictTransactionDetails" placeholder="e.g. Salary income, Starbucks Coffee, Walmart Groceries, Uber" />
             </div>
             <div class="col-md-4">
                 <div class="form-check recurring-control">
@@ -81,10 +81,11 @@
             </div>
             <div class="col-md-2">
                 <label for="tx-type" class="form-label fw-semibold">Type</label>
-                <select id="tx-type" class="form-select" @bind="transactionType">
+                <select id="tx-type" class="form-select" @bind="transactionType" disabled>
                     <option value="Expense">Expense</option>
                     <option value="Income">Income</option>
                 </select>
+                <small class="form-text">Automatically detected from the description.</small>
             </div>
             @if (transactionType == "Expense")
             {
@@ -312,15 +313,18 @@
         }
     }
 
-    private void PredictCategory()
+    private void PredictTransactionDetails()
     {
         if (string.IsNullOrWhiteSpace(newDescription))
         {
             predictedCategoryId = 0;
+            transactionType = "Expense";
             return;
         }
 
-        predictedCategoryId = TransactionCategoryClassifier.Predict(newDescription).CategoryId;
+        var prediction = TransactionCategoryClassifier.Predict(newDescription);
+        predictedCategoryId = prediction.CategoryId;
+        transactionType = prediction.CategoryId == 3 ? "Income" : "Expense";
     }
 
     private async Task SaveTransaction()
