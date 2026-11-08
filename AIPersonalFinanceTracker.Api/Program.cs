@@ -89,6 +89,8 @@ using (var scope = app.Services.CreateScope())
             );
             """);
         EnsureTransactionColumn(context, "IsRecurring", "INTEGER NOT NULL DEFAULT 0");
+        EnsureAccountColumn(context, "PasswordResetToken", "TEXT NULL");
+        EnsureAccountColumn(context, "PasswordResetTokenExpiresAt", "TEXT NULL");
         EnsureTransactionColumn(context, "RecurrenceDay", "INTEGER NULL");
         EnsureTransactionColumn(context, "NextOccurrence", "TEXT NULL");
         EnsureTransactionColumn(context, "AnomalyStatus", "TEXT NULL");
@@ -147,6 +149,7 @@ static void EnsureProfileColumn(AppDbContext context, string columnName, string 
                     exists = true;
                     break;
                 }
+
             }
         }
 
@@ -155,6 +158,30 @@ static void EnsureProfileColumn(AppDbContext context, string columnName, string 
 
         context.Database.CloseConnection();
     }
+
+static void EnsureAccountColumn(AppDbContext context, string columnName, string definition)
+{
+    using var command = context.Database.GetDbConnection().CreateCommand();
+    command.CommandText = "PRAGMA table_info(UserAccounts)";
+    context.Database.OpenConnection();
+    var exists = false;
+    using (var reader = command.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                exists = true;
+                break;
+            }
+        }
+    }
+
+    if (!exists)
+        context.Database.ExecuteSqlRaw($"ALTER TABLE UserAccounts ADD COLUMN {columnName} {definition}");
+
+    context.Database.CloseConnection();
+}
 app.UseCors();
 
 if (app.Environment.IsDevelopment())

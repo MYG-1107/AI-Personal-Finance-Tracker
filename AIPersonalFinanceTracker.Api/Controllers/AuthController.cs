@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -57,6 +58,48 @@ public class AuthController : ControllerBase
         if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
             return Unauthorized(new { message = "The email or password is incorrect." });
         return Ok(ToResponse(user));
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Email))
+            return BadRequest(new { message = "Email is required." });
+
+        var user = await _context.UserAccounts.SingleOrDefaultAsync(item =>
+            item.Email == request.Email.Trim().ToLowerInvariant());
+        if (user is null)
+            return Ok(new { message = "If an account exists, a reset code has been generated." });
+
+        user.PasswordResetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(30);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Reset code generated. Use it within 30 minutes.",
+            resetToken = user.PasswordResetToken
+        });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Token) || request.NewPassword.Length < 8)
+            return BadRequest(new { message = "Email, reset code, and a password of at least 8 characters are required." });
+
+        var user = await _context.UserAccounts.SingleOrDefaultAsync(item =>
+            item.Email == request.Email.Trim().ToLowerInvariant());
+        if (user is null || user.PasswordResetToken != request.Token.Trim() ||
+            user.PasswordResetTokenExpiresAt is null || user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
+            return BadRequest(new { message = "The reset code is invalid or expired." });
+
+        user.PasswordHash = HashPassword(request.NewPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetTokenExpiresAt = null;
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Password reset successfully. You can now sign in." });
     }
 
     private static AuthResponse ToResponse(UserAccount user) => new()

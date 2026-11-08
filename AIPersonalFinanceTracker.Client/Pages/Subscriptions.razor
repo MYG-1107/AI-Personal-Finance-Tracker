@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">FIXED COST INTELLIGENCE</p>
         <h1>Subscription burn rate</h1>
-        <p class="page-subtitle">Recurring merchants are detected from your transaction history.</p>
+        <p class="page-subtitle">Understand the fixed monthly costs that quietly reduce your available cash.</p>
     </div>
 </div>
 
@@ -18,6 +18,11 @@
 }
 else
 {
+    <div class="surface-panel mb-4">
+        <h2>What is this?</h2>
+        <p class="mb-2">Subscriptions identifies recurring payments such as streaming services, memberships, insurance, software, and regular bills.</p>
+        <p class="text-muted mb-0">It groups repeated merchants, estimates monthly and annual cost, and highlights the next expected renewal so you can cancel unused services or plan ahead.</p>
+    </div>
     <div class="row g-3 mb-4">
         <div class="col-md-6"><div class="metric-card metric-card-primary"><div class="metric-label">Monthly burn rate</div><div class="metric-value">@Currency.Format(analytics.MonthlyBurnRate)</div></div></div>
         <div class="col-md-6"><div class="metric-card"><div class="metric-label">Annualized fixed cost</div><div class="metric-value">@Currency.Format(analytics.AnnualizedBurnRate)</div></div></div>

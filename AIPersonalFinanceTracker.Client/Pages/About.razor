@@ -1,56 +1,45 @@
 @page "/about"
-@inject CurrencyService Currency
 
-<PageTitle>About System</PageTitle>
+<PageTitle>About - AI Personal Finance Tracker</PageTitle>
 
-<div class="container py-4">
-    <div class="card shadow-sm border-0 p-4 mb-4">
-        <h2 class="fw-bold text-primary mb-3">About the AI Personal Finance Tracker</h2>
-        <p class="lead text-secondary">
-            An autonomous, privacy-focused financial intelligence platform designed to simplify expense management, automate categorization, detect abnormal spending, and forecast cash flow using local Machine Learning.
-        </p>
+<div class="page-intro">
+    <div>
+        <p class="eyebrow">ABOUT THE PLATFORM</p>
+        <h1>Financial clarity, built privately</h1>
+        <p class="page-subtitle">A personal finance workspace that turns everyday money activity into useful, understandable decisions.</p>
+    </div>
+</div>
 
-        <hr class="my-4" />
-
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="p-3 border rounded bg-light h-100">
-                    <h5 class="fw-bold text-dark">What is this System?</h5>
-                    <p class="small text-muted m-0">
-                        A web application built with Blazor WebAssembly, C#, and ML.NET that transforms raw financial transactions into actionable insights.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="p-3 border rounded bg-light h-100">
-                    <h5 class="fw-bold text-dark">How It Works</h5>
-                    <ul class="small text-muted ps-3 m-0">
-                        <li><strong>AI Auto-Fencing:</strong> Categorizes transactions using string matching and ML rules.</li>
-                        <li><strong>Predictive Forecasting:</strong> Analyzes current daily burn rates to project end-of-month balances.</li>
-                        <li><strong>Anomaly Detection:</strong> Flags transactions exceeding statistical baseline thresholds.</li>
-                        <li><strong>Local OCR Ingestion:</strong> Extracts merchant names and bill totals directly from receipt documents.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="p-3 border rounded bg-light h-100">
-                    <h5 class="fw-bold text-dark">Why This System?</h5>
-                    <p class="small text-muted m-0">
-                        Traditional budget trackers rely on manual data entry or require users to surrender credentials. This system provides automated intelligence while keeping data local.
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="p-3 border rounded bg-light h-100">
-                    <h5 class="fw-bold text-dark">For Whom?</h5>
-                    <p class="small text-muted m-0">
-                        Built for students, freelancers, professionals, and households globally. With multi-currency formatting and GDPR compliance, users anywhere can manage finances securely.
-                    </p>
-                </div>
-            </div>
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="surface-panel h-100">
+            <h2>What is AI Personal Finance Tracker?</h2>
+            <p>This platform helps individuals and households capture transactions, understand spending, set goals, monitor budgets, and make better financial decisions from one workspace.</p>
+            <p class="mb-0">It combines a Blazor WebAssembly interface, an ASP.NET Core API, SQLite persistence, and ML.NET intelligence. Your financial records stay in the application rather than being sent to an advertising or social platform.</p>
         </div>
     </div>
+    <div class="col-lg-4">
+        <div class="surface-panel h-100">
+            <h2>Built for</h2>
+            <ul class="mb-0">
+                <li>Students and first-time budgeters</li>
+                <li>Professionals and freelancers</li>
+                <li>Families managing shared budgets</li>
+                <li>Anyone tracking money across currencies</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-md-6"><div class="surface-panel h-100"><h2>Money management</h2><p class="mb-0">Create transactions manually, use Smart Add, import CSV/XLSX history, upload receipts, filter your ledger, configure categories, and export your records.</p></div></div>
+    <div class="col-md-6"><div class="surface-panel h-100"><h2>AI and ML intelligence</h2><p class="mb-0">Automatic category suggestions, cash-flow forecasts, anomaly risk scoring, recurring-payment analysis, and a contextual financial advisor turn records into practical guidance.</p></div></div>
+    <div class="col-md-6"><div class="surface-panel h-100"><h2>Goals and planning</h2><p class="mb-0">Track savings goals, monthly budgets, category limits, projected overruns, and fixed-cost burn rate. Download a monthly PDF report for a portable summary.</p></div></div>
+    <div class="col-md-6"><div class="surface-panel h-100"><h2>International by design</h2><p class="mb-0">Choose from international currencies, view values in your base currency, and convert stored financial amounts using live exchange rates when your profile currency changes.</p></div></div>
+</div>
+
+<div class="surface-panel mt-4">
+    <h2>Privacy and security</h2>
+    <p>Passwords are stored as salted PBKDF2 hashes. Authentication, profile preferences, transactions, goals, and reports are handled by the application API. The platform is designed for personal use; always deploy it behind HTTPS, use persistent protected storage, and configure production email and secrets before public launch.</p>
+    <p class="text-muted mb-0">This application provides financial organization and insights, not regulated investment, tax, or legal advice.</p>
 </div>

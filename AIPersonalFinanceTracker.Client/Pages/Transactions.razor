@@ -45,12 +45,9 @@
             <button class="btn btn-outline-primary" @onclick="ParseSmartAdd" disabled="@string.IsNullOrWhiteSpace(smartText)">🤖 Parse</button>
         </div>
         <div class="mb-3">
-            <label class="form-label fw-semibold" for="receipt-upload">Receipt upload</label>
-            <InputFile id="receipt-upload" OnChange="UploadReceipt" accept=".txt,.csv,.json,.xlsx,image/*,application/pdf" />
-            <small class="text-muted d-block">Upload a receipt to pre-fill the form, or import CSV/XLSX transaction history.</small>
-            <div class="mt-2">
-                <InputFile id="history-upload" OnChange="ImportHistory" accept=".csv,.xlsx" />
-            </div>
+            <label class="form-label fw-semibold" for="transaction-upload">Receipt or transaction history</label>
+            <InputFile id="transaction-upload" OnChange="UploadFile" accept=".txt,.csv,.json,.xlsx,image/*,application/pdf" />
+            <small class="text-muted d-block">Upload one receipt to pre-fill the form, or choose a CSV/XLSX file to import transaction history.</small>
         </div>
         @if (smartPreview != null)
         {
@@ -253,12 +250,19 @@
         }
     }
 
-    private async Task UploadReceipt(InputFileChangeEventArgs args)
+    private async Task UploadFile(InputFileChangeEventArgs args)
     {
         errorMessage = null;
         var file = args.File;
         if (file is null)
             return;
+
+        if (Path.GetExtension(file.Name).Equals(".csv", StringComparison.OrdinalIgnoreCase) ||
+            Path.GetExtension(file.Name).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            await ImportHistory(file);
+            return;
+        }
 
         try
         {
@@ -411,13 +415,10 @@
         filterType = "All";
     }
 
-    private async Task ImportHistory(InputFileChangeEventArgs args)
+    private async Task ImportHistory(IBrowserFile file)
     {
         errorMessage = null;
         successMessage = null;
-        var file = args.File;
-        if (file is null) return;
-
         try
         {
             using var content = new MultipartFormDataContent();
