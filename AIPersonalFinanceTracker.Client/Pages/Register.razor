@@ -1,0 +1,47 @@
+@page "/register"
+@using System.Net.Http.Json
+@using AIPersonalFinanceTracker.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Create account - AI Personal Finance Tracker</PageTitle>
+
+<div class="auth-shell">
+    <div class="auth-card surface-panel">
+        <img class="auth-logo" src="logo.svg" alt="AI Personal Finance Tracker logo" />
+        <p class="eyebrow">YOUR PRIVATE WORKSPACE</p>
+        <h1>Create your account</h1>
+        <p class="text-muted">Register once and your profile, goals, and transaction history remain available when you return.</p>
+        @if (error is not null) { <div class="alert alert-danger">@error</div> }
+        <label class="form-label" for="register-name">Name</label>
+        <input id="register-name" class="form-control mb-3" @bind="name" autocomplete="name" />
+        <label class="form-label" for="register-email">Email</label>
+        <input id="register-email" class="form-control mb-3" type="email" @bind="email" autocomplete="email" />
+        <label class="form-label" for="register-password">Password</label>
+        <input id="register-password" class="form-control mb-4" type="password" @bind="password" autocomplete="new-password" />
+        <button class="btn btn-primary w-100" @onclick="CreateAccount" disabled="@busy">@(busy ? "Creating..." : "Create account")</button>
+        <p class="text-muted mt-4 mb-0">Already registered? <a href="/login">Sign in</a></p>
+    </div>
+</div>
+
+@code {
+    private string name = "";
+    private string email = "";
+    private string password = "";
+    private string? error;
+    private bool busy;
+
+    private async Task CreateAccount()
+    {
+        error = null;
+        busy = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/register", new RegisterRequest { Name = name, Email = email, Password = password });
+            if (!response.IsSuccessStatusCode) { error = await response.Content.ReadAsStringAsync(); return; }
+            Navigation.NavigateTo("/login");
+        }
+        catch (Exception ex) { error = $"Unable to create account: {ex.Message}"; }
+        finally { busy = false; }
+    }
+}

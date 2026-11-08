@@ -49,6 +49,18 @@ public class FinancialAdvisorService
             return Response(goalSummary, $"Total expenses: {totalSpend:N2}", $"Tracked income: {income:N2}");
         }
 
+        if (normalizedQuestion.Contains("unusual") || normalizedQuestion.Contains("anomal"))
+        {
+            var anomalies = transactions.Where(transaction => transaction.IsAnomaly).ToList();
+            return Response(
+                anomalies.Count == 0
+                    ? "I did not find any unusual expenses flagged in your transaction history."
+                    : $"I found {anomalies.Count} unusual transaction(s) worth reviewing.",
+                anomalies.Count == 0 ? "Keep importing complete history so trends become more reliable." :
+                    string.Join("; ", anomalies.Take(3).Select(item => $"{item.Description}: {Math.Abs(item.Amount):N2}")),
+                $"Total tracked expenses: {totalSpend:N2}");
+        }
+
         if (normalizedQuestion.Contains("compare") || normalizedQuestion.Contains("more") && normalizedQuestion.Contains("month"))
         {
             var currentMonth = expenses.Where(transaction => transaction.Date.Month == DateTime.UtcNow.Month &&

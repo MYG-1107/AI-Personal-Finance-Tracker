@@ -1,0 +1,48 @@
+@page "/login"
+@using System.Net.Http.Json
+@using AIPersonalFinanceTracker.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Sign in - AI Personal Finance Tracker</PageTitle>
+
+<div class="auth-shell">
+    <div class="auth-card surface-panel">
+        <img class="auth-logo" src="logo.svg" alt="AI Personal Finance Tracker logo" />
+        <p class="eyebrow">WELCOME BACK</p>
+        <h1>Sign in</h1>
+        <p class="text-muted">Continue to your saved financial workspace.</p>
+        @if (error is not null) { <div class="alert alert-danger">@error</div> }
+        <label class="form-label" for="login-email">Email</label>
+        <input id="login-email" class="form-control mb-3" type="email" @bind="email" autocomplete="email" />
+        <label class="form-label" for="login-password">Password</label>
+        <input id="login-password" class="form-control mb-4" type="password" @bind="password" autocomplete="current-password" />
+        <button class="btn btn-primary w-100" @onclick="SignIn" disabled="@busy">@(busy ? "Signing in..." : "Sign in")</button>
+        <p class="text-muted mt-4 mb-0">New here? <a href="/register">Create an account</a></p>
+    </div>
+</div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string? error;
+    private bool busy;
+
+    private async Task SignIn()
+    {
+        error = null;
+        busy = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/login", new LoginRequest { Email = email, Password = password });
+            if (!response.IsSuccessStatusCode) { error = await response.Content.ReadAsStringAsync(); return; }
+            var account = await response.Content.ReadFromJsonAsync<AuthResponse>();
+            if (account is null) { error = "The server returned an invalid account."; return; }
+            await JS.InvokeVoidAsync("localStorage.setItem", "finance.user", System.Text.Json.JsonSerializer.Serialize(account));
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex) { error = $"Unable to sign in: {ex.Message}"; }
+        finally { busy = false; }
+    }
+}

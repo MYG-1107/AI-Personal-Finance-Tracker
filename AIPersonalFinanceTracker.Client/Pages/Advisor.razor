@@ -28,7 +28,16 @@
     private string question = "";
     private bool isBusy;
     private AdvisorResponse? response;
-    private readonly string[] suggestions = { "Where did I spend the most?", "How can I cut down transport expenses?", "Give me a financial summary" };
+    private readonly string[] suggestions =
+    {
+        "Where did I spend the most?",
+        "How can I cut down transport expenses?",
+        "Give me a financial summary",
+        "What is my average monthly spending?",
+        "Compare this month with last month",
+        "How close am I to my savings goals?",
+        "Which unusual expenses should I review?"
+    };
 
     private async Task Ask()
     {

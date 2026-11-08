@@ -5,6 +5,8 @@ using AIPersonalFinanceTracker.Shared.Models;
 using AIPersonalFinanceTracker.ML;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.IO.Compression;
+using System.Xml.Linq;
 
 namespace AIPersonalFinanceTracker.Api.Controllers;
 
@@ -65,7 +67,7 @@ public class TransactionsController : ControllerBase
             {
                 Description = desc,
                 Amount = amt,
-                Date = dto?.Date ?? DateTime.UtcNow,
+                Date = dto.Date ?? DateTime.UtcNow,
                 CategoryId = catId,
                 IsRecurring = dto.IsRecurring,
                 RecurrenceDay = dto.RecurrenceDay,
@@ -185,6 +187,117 @@ public class TransactionsController : ControllerBase
             },
             Message = "Review the parsed fields before saving."
         });
+    }
+
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<List<Transaction>>> Import(IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "Choose a CSV or XLSX transaction history file." });
+        if (file.Length > 20 * 1024 * 1024)
+            return BadRequest(new { message = "Import files must be 20 MB or smaller." });
+
+        try
+        {
+            var rows = Path.GetExtension(file.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase)
+                ? await ReadXlsxAsync(file)
+                : await ReadCsvAsync(file);
+            if (rows.Count == 0)
+                return BadRequest(new { message = "No transaction rows were found. Include Date, Description and Amount columns." });
+
+            var imported = new List<Transaction>();
+            foreach (var row in rows)
+            {
+                if (string.IsNullOrWhiteSpace(row.Description) || row.Amount == 0)
+                    continue;
+                var transaction = new Transaction
+                {
+                    Description = row.Description.Trim(),
+                    Amount = row.Amount,
+                    Date = row.Date ?? DateTime.UtcNow,
+                    CategoryId = _categoryPredictor.PredictCategory(row.Description) is var category && category > 0 ? category : null,
+                    IsAutoCategorized = true
+                };
+                var anomaly = _anomalyDetector.DetectAnomaly(transaction, imported);
+                transaction.IsAnomaly = anomaly.IsAnomaly;
+                transaction.AnomalyReason = anomaly.Reason;
+                imported.Add(transaction);
+            }
+
+            _context.Transactions.AddRange(imported);
+            await _context.SaveChangesAsync();
+            return Ok(imported);
+        }
+        catch (FormatException ex)
+        {
+            return BadRequest(new { message = $"The import file has an invalid value: {ex.Message}" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Unable to import transaction history: {ex.Message}" });
+        }
+    }
+
+    private sealed record ImportedRow(string Description, decimal Amount, DateTime? Date);
+
+    private static async Task<List<ImportedRow>> ReadCsvAsync(IFormFile file)
+    {
+        using var reader = new StreamReader(file.OpenReadStream());
+        var rows = new List<ImportedRow>();
+        var header = await reader.ReadLineAsync();
+        if (header is null) return rows;
+        var columns = header.Split(',').Select((name, index) => (Name: name.Trim().ToLowerInvariant(), Index: index)).ToList();
+        var descriptionIndex = columns.FirstOrDefault(c => c.Name is "description" or "merchant" or "name").Index;
+        var amountIndex = columns.FirstOrDefault(c => c.Name is "amount" or "value" or "total").Index;
+        var dateIndex = columns.FirstOrDefault(c => c.Name is "date" or "transaction date").Index;
+        while (await reader.ReadLineAsync() is { } line)
+        {
+            var values = line.Split(',');
+            if (descriptionIndex >= values.Length || amountIndex >= values.Length) continue;
+            var amount = decimal.Parse(values[amountIndex].Trim().Replace("$", "").Replace("₹", ""), CultureInfo.InvariantCulture);
+            var typeIndex = columns.FirstOrDefault(c => c.Name is "type" or "transaction type").Index;
+            if (amount > 0 && typeIndex < values.Length &&
+                values[typeIndex].Contains("expense", StringComparison.OrdinalIgnoreCase))
+                amount = -amount;
+            DateTime? date = dateIndex < values.Length && DateTime.TryParse(values[dateIndex], out var parsed) ? parsed : null;
+            rows.Add(new ImportedRow(values[descriptionIndex], amount, date));
+        }
+        return rows;
+    }
+
+    private static async Task<List<ImportedRow>> ReadXlsxAsync(IFormFile file)
+    {
+        await using var input = file.OpenReadStream();
+        using var archive = new ZipArchive(input, ZipArchiveMode.Read);
+        var shared = new List<string>();
+        var sharedEntry = archive.GetEntry("xl/sharedStrings.xml");
+        if (sharedEntry is not null)
+        {
+            using var sharedStream = sharedEntry.Open();
+            var sharedXml = XDocument.Load(sharedStream);
+            shared.AddRange(sharedXml.Descendants().Where(e => e.Name.LocalName == "si")
+                .Select(si => string.Concat(si.Descendants().Where(t => t.Name.LocalName == "t").Select(t => t.Value))));
+        }
+        var sheet = archive.GetEntry("xl/worksheets/sheet1.xml");
+        if (sheet is null) return new();
+        using var sheetStream = sheet.Open();
+        var xml = XDocument.Load(sheetStream);
+        var rows = xml.Descendants().Where(e => e.Name.LocalName == "row")
+            .Select(row => row.Elements().Where(e => e.Name.LocalName == "c").Select(cell =>
+            {
+                var value = cell.Elements().FirstOrDefault(e => e.Name.LocalName == "v")?.Value ?? "";
+                return cell.Attribute("t")?.Value == "s" && int.TryParse(value, out var index) && index < shared.Count ? shared[index] : value;
+            }).ToList()).ToList();
+        if (rows.Count < 2) return new();
+        var headers = rows[0].Select((value, index) => (Name: value.Trim().ToLowerInvariant(), Index: index)).ToList();
+        var descriptionIndex = headers.FirstOrDefault(c => c.Name is "description" or "merchant" or "name").Index;
+        var amountIndex = headers.FirstOrDefault(c => c.Name is "amount" or "value" or "total").Index;
+        var dateIndex = headers.FirstOrDefault(c => c.Name is "date" or "transaction date").Index;
+        return rows.Skip(1).Where(row => descriptionIndex < row.Count && amountIndex < row.Count)
+            .Select(row => new ImportedRow(row[descriptionIndex],
+                decimal.Parse(row[amountIndex].Replace("$", "").Replace("₹", ""), CultureInfo.InvariantCulture),
+                dateIndex < row.Count && DateTime.TryParse(row[dateIndex], out var date) ? date : null)).ToList();
     }
 
     [HttpDelete("{id:int}")]

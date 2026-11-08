@@ -46,8 +46,11 @@
         </div>
         <div class="mb-3">
             <label class="form-label fw-semibold" for="receipt-upload">Receipt upload</label>
-            <InputFile id="receipt-upload" OnChange="UploadReceipt" accept=".txt,.csv,.json,image/*,application/pdf" />
-            <small class="text-muted d-block">Upload a text receipt now, or an image/PDF when an OCR provider is configured.</small>
+            <InputFile id="receipt-upload" OnChange="UploadReceipt" accept=".txt,.csv,.json,.xlsx,image/*,application/pdf" />
+            <small class="text-muted d-block">Upload a receipt to pre-fill the form, or import CSV/XLSX transaction history.</small>
+            <div class="mt-2">
+                <InputFile id="history-upload" OnChange="ImportHistory" accept=".csv,.xlsx" />
+            </div>
         </div>
         @if (smartPreview != null)
         {
@@ -221,6 +224,7 @@
     private SmartAddPreview? smartPreview;
     private bool isRecurring;
     private int recurrenceDay = DateTime.UtcNow.Day;
+    private DateTime transactionDate = DateTime.UtcNow;
 
     private IEnumerable<Transaction> FilteredTransactions =>
         (transactions ?? Enumerable.Empty<Transaction>())
@@ -276,9 +280,11 @@
                 return;
 
             newDescription = scan.Description;
-            newAmount = scan.Amount;
+            newAmount = Math.Abs(scan.Amount);
             transactionType = "Expense";
             selectedCategoryId = scan.SuggestedCategoryId > 0 ? scan.SuggestedCategoryId : null;
+            predictedCategoryId = scan.SuggestedCategoryId > 0 ? scan.SuggestedCategoryId : 0;
+            transactionDate = scan.Date;
             successMessage = $"Receipt extracted from {scan.Merchant}. Review the fields before saving.";
         }
         catch (Exception ex)
@@ -328,7 +334,7 @@
                 Description = newDescription,
                 Amount = transactionType == "Expense" ? -Math.Abs(newAmount) : Math.Abs(newAmount),
                 CategoryId = selectedCategoryId ?? predictedCategoryId,
-                Date = DateTime.UtcNow,
+                Date = transactionDate,
                 IsRecurring = isRecurring,
                 RecurrenceDay = isRecurring ? (int?)Math.Clamp(recurrenceDay, 1, 31) : null
             };
@@ -356,6 +362,7 @@
                 smartText = "";
                 smartPreview = null;
                 isRecurring = false;
+                transactionDate = DateTime.UtcNow;
             }
 
             else
@@ -402,6 +409,37 @@
         searchTerm = "";
         filterCategoryId = 0;
         filterType = "All";
+    }
+
+    private async Task ImportHistory(InputFileChangeEventArgs args)
+    {
+        errorMessage = null;
+        successMessage = null;
+        var file = args.File;
+        if (file is null) return;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            await using var stream = file.OpenReadStream(20 * 1024 * 1024);
+            using var streamContent = new StreamContent(stream);
+            content.Add(streamContent, "file", file.Name);
+            var response = await Http.PostAsync("api/transactions/import", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            var imported = await response.Content.ReadFromJsonAsync<List<Transaction>>() ?? new();
+            transactions ??= new List<Transaction>();
+            transactions.AddRange(imported);
+            successMessage = $"{imported.Count} transaction(s) imported. Categories were automatically predicted where possible.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Transaction history import failed: {ex.Message}";
+        }
     }
 
     private async Task DeleteTransaction(int id)

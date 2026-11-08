@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
     public DbSet<BudgetWorkspace> BudgetWorkspaces => Set<BudgetWorkspace>();
     public DbSet<BudgetMember> BudgetMembers => Set<BudgetMember>();
+    public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
