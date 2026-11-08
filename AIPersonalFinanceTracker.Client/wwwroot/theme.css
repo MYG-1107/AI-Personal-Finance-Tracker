@@ -22,6 +22,10 @@ body {
 .app-nav { align-items: center; gap: .25rem; }
 .app-nav .nav-link { color: #d6e0e3; border-radius: 7px; padding: .55rem .75rem; font-size: .88rem; font-weight: 600; }
 .app-nav .nav-link:hover { color: #fff; background: rgba(255,255,255,.1); }
+.signed-in-status { color: #70d7ca !important; font-size: .82rem; }
+.logout-button { border: 1px solid #d88a93; border-radius: 7px; background: transparent; color: #ffd9dd; padding: .48rem .7rem; font-size: .82rem; margin-left: .15rem; }
+.logout-button:hover { background: #d88a93; color: #17212b; }
+.empty-state { min-height: 180px; display: grid; place-items: center; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); text-align: center; padding: 1.5rem; }
 .theme-toggle { border: 1px solid #6b7b82; border-radius: 7px; background: transparent; color: #fff; padding: .48rem .7rem; font-size: .82rem; margin-left: .5rem; }
 .app-main { max-width: 1540px; padding: 2rem clamp(1rem, 3vw, 3rem) 4rem; }
 .page-intro { display: flex; justify-content: space-between; align-items: end; gap: 1.5rem; margin-bottom: 1.75rem; }

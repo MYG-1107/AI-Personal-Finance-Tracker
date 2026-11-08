@@ -12,12 +12,21 @@
                 <span><strong>Finance</strong><small>Personal intelligence</small></span>
             </a>
             <div class="navbar-nav app-nav">
-                <a class="nav-link" href="/">Overview</a>
-                <a class="nav-link" href="/transactions">Transactions</a>
-                <a class="nav-link" href="/profile">Profile</a>
-                <a class="nav-link" href="/goals">Goals</a>
-                <a class="nav-link" href="/advisor">AI Advisor</a>
-                <a class="nav-link" href="/login">Sign in</a>
+                @if (isAuthenticated)
+                {
+                    <a class="nav-link" href="/">Overview</a>
+                    <a class="nav-link" href="/transactions">Transactions</a>
+                    <a class="nav-link" href="/profile">Profile</a>
+                    <a class="nav-link" href="/goals">Goals</a>
+                    <a class="nav-link" href="/advisor">AI Advisor</a>
+                    <span class="nav-link signed-in-status" aria-label="Signed in">Signed in</span>
+                    <button class="logout-button" @onclick="SignOut">Log out</button>
+                }
+                else
+                {
+                    <a class="nav-link" href="/login">Sign in</a>
+                    <a class="nav-link" href="/register">Create account</a>
+                }
                 <button class="theme-toggle" @onclick="ToggleTheme" aria-label="Toggle color theme">
                     <span aria-hidden="true">☼</span> @((darkMode) ? "Light" : "Dark")
                 </button>
@@ -31,6 +40,7 @@
 
 @code {
     private bool darkMode;
+    private bool isAuthenticated;
 
     private void ToggleTheme()
     {
@@ -43,8 +53,10 @@
         try
         {
             var path = new Uri(Navigation.Uri).AbsolutePath;
-            var signedIn = await JS.InvokeAsync<string?>("localStorage.getItem", "finance.user");
-            if (string.IsNullOrWhiteSpace(signedIn) && path is not "/login" and not "/register")
+            await JS.InvokeVoidAsync("localStorage.removeItem", "finance.user");
+            var signedIn = await JS.InvokeAsync<string?>("sessionStorage.getItem", "finance.user");
+            isAuthenticated = !string.IsNullOrWhiteSpace(signedIn);
+            if (!isAuthenticated && path is not "/login" and not "/register")
             {
                 Navigation.NavigateTo("/login");
                 return;
@@ -58,5 +70,13 @@
         {
             Console.WriteLine($"Unable to load saved profile preferences: {ex.Message}");
         }
+    }
+
+    private async Task SignOut()
+    {
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "finance.user");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "finance.user");
+        isAuthenticated = false;
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

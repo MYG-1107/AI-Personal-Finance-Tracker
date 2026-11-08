@@ -37,12 +37,5 @@ public class AppDbContext : DbContext
             new Category { Id = 5, Name = "Transport & Travel", Type = "Expense", MonthlyBudgetLimit = 300.00m }
         );
 
-        modelBuilder.Entity<Transaction>().HasData(
-            new Transaction { Id = 1, Description = "Monthly Salary Direct Deposit", Amount = 5000.00m, Date = DateTime.UtcNow.AddDays(-10), IsAutoCategorized = true, CategoryId = 3 },
-            new Transaction { Id = 2, Description = "Water Utility Bill", Amount = -100.00m, Date = DateTime.UtcNow.AddDays(-8), IsAutoCategorized = true, CategoryId = 2 },
-            new Transaction { Id = 3, Description = "Target Home Goods & Groceries", Amount = -150.00m, Date = DateTime.UtcNow.AddDays(-5), IsAutoCategorized = true, CategoryId = 1 },
-            new Transaction { Id = 4, Description = "Uber Trip to Airport", Amount = -2000.00m, Date = DateTime.UtcNow.AddDays(-2), IsAutoCategorized = true, IsAnomaly = true, AnomalyReason = "High Expense Spike: $2000.00 exceeds normal category baseline.", CategoryId = 5 },
-            new Transaction { Id = 5, Description = "Cinema Movie Tickets", Amount = -45.00m, Date = DateTime.UtcNow.AddDays(-1), IsAutoCategorized = true, CategoryId = 4 }
-        );
     }
 }

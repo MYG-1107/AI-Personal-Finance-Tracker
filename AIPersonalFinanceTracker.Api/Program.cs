@@ -92,6 +92,14 @@ using (var scope = app.Services.CreateScope())
         EnsureTransactionColumn(context, "NextOccurrence", "TEXT NULL");
         EnsureTransactionColumn(context, "AnomalyStatus", "TEXT NULL");
         EnsureProfileColumn(context, "AutoGoalAllocationPercent", "TEXT NOT NULL DEFAULT '0'");
+        context.Database.ExecuteSqlRaw("""
+            DELETE FROM Transactions
+            WHERE (Id = 1 AND Description = 'Monthly Salary Direct Deposit')
+               OR (Id = 2 AND Description = 'Water Utility Bill')
+               OR (Id = 3 AND Description = 'Target Home Goods & Groceries')
+               OR (Id = 4 AND Description = 'Uber Trip to Airport')
+               OR (Id = 5 AND Description = 'Cinema Movie Tickets');
+            """);
     }
     catch (Exception ex)
     {

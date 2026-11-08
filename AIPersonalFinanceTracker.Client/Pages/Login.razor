@@ -39,8 +39,9 @@
             if (!response.IsSuccessStatusCode) { error = await response.Content.ReadAsStringAsync(); return; }
             var account = await response.Content.ReadFromJsonAsync<AuthResponse>();
             if (account is null) { error = "The server returned an invalid account."; return; }
-            await JS.InvokeVoidAsync("localStorage.setItem", "finance.user", System.Text.Json.JsonSerializer.Serialize(account));
-            Navigation.NavigateTo("/");
+            await JS.InvokeVoidAsync("localStorage.removeItem", "finance.user");
+            await JS.InvokeVoidAsync("sessionStorage.setItem", "finance.user", System.Text.Json.JsonSerializer.Serialize(account));
+            Navigation.NavigateTo("/", forceLoad: true);
         }
         catch (Exception ex) { error = $"Unable to sign in: {ex.Message}"; }
         finally { busy = false; }
