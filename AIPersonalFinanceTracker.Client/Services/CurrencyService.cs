@@ -53,28 +53,36 @@ public class CurrencyService
             new() { Code = "VND", Symbol = "₫", Name = "VND - Vietnamese Dong" }
         };
 
-        var cultureCurrencies = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
-            .Select(culture =>
-            {
-                try
+        IEnumerable<CurrencyOption> cultureCurrencies = Array.Empty<CurrencyOption>();
+        try
+        {
+            cultureCurrencies = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+                .Select(culture =>
                 {
-                    var region = new RegionInfo(culture.Name);
-                    return new CurrencyOption
+                    try
                     {
-                        Code = region.ISOCurrencySymbol,
-                        Symbol = region.CurrencySymbol,
-                        Name = $"{region.ISOCurrencySymbol} - {region.CurrencyEnglishName}"
-                    };
-                }
-                catch (ArgumentException)
-                {
-                    return null;
-                }
-            })
-            .Where(currency => currency is not null)
-            .GroupBy(currency => currency!.Code)
-            .Select(group => group.First()!)
-            .ToList();
+                        var region = new RegionInfo(culture.Name);
+                        return new CurrencyOption
+                        {
+                            Code = region.ISOCurrencySymbol,
+                            Symbol = region.CurrencySymbol,
+                            Name = $"{region.ISOCurrencySymbol} - {region.CurrencyEnglishName}"
+                        };
+                    }
+                    catch (ArgumentException)
+                    {
+                        return null;
+                    }
+                })
+                .Where(currency => currency is not null)
+                .GroupBy(currency => currency!.Code)
+                .Select(group => group.First()!)
+                .ToList();
+        }
+        catch (CultureNotFoundException)
+        {
+            // The client uses invariant globalization, so the built-in catalog is authoritative.
+        }
 
         foreach (var currency in cultureCurrencies)
         {
