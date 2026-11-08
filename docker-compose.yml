@@ -8,4 +8,10 @@ services:
       - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/finance.db
     restart: unless-stopped
+    volumes:
+      - finance-data:/app/data
+
+volumes:
+  finance-data:
