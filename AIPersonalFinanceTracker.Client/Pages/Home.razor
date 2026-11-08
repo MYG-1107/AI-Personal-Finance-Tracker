@@ -2,6 +2,7 @@
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject CurrencyService Currency
 
 <PageTitle>Financial Dashboard</PageTitle>
 
@@ -18,21 +19,21 @@
         <div class="col-md-4">
             <div class="metric-card metric-card-primary">
                 <div class="metric-label">Total balance</div>
-                <div class="metric-value">$@TotalBalance.ToString("N2")</div>
+                <div class="metric-value">@Currency.Format(TotalBalance)</div>
                 <div class="metric-note">Available across your accounts</div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="metric-card">
                 <div class="metric-label">Total income</div>
-                <div class="metric-value text-success">+$@TotalIncome.ToString("N2")</div>
+                <div class="metric-value text-success">+@Currency.Format(TotalIncome)</div>
                 <div class="metric-note">Money in this period</div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="metric-card">
                 <div class="metric-label">Total expenses</div>
-                <div class="metric-value text-danger">-$@TotalExpenses.ToString("N2")</div>
+                <div class="metric-value text-danger">-@Currency.Format(TotalExpenses)</div>
                 <div class="metric-note">Money out this period</div>
             </div>
         </div>
@@ -64,7 +65,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between text-sm mb-1">
                                 <span class="fw-semibold">@cat.Name</span>
-                                <span class="fw-bold">$@spent.ToString("N2")</span>
+                                <span class="fw-bold">@Currency.Format(spent)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-primary" role="progressbar" style="width: @pct.ToString("F0")%"></div>
@@ -91,7 +92,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between text-sm mb-1">
                                 <span class="fw-semibold">@cat.Name</span>
-                                <span class="fw-bold">$@spent.ToString("N2") / $@limit.ToString("N2")</span>
+                                <span class="fw-bold">@Currency.Format(spent) / @Currency.Format(limit)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar @(pct >= 80 ? "bg-danger" : "bg-success")" role="progressbar" style="width: @pct.ToString("F0")%"></div>

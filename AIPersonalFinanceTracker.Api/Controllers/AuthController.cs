@@ -18,8 +18,10 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
         if (request is null || string.IsNullOrWhiteSpace(request.Name) ||
-            string.IsNullOrWhiteSpace(request.Email) || request.Password.Length < 8)
-            return BadRequest(new { message = "Name, email and a password of at least 8 characters are required." });
+            string.IsNullOrWhiteSpace(request.Email) || request.Password.Length < 8 ||
+            string.IsNullOrWhiteSpace(request.CountryCode) || request.CountryCode.Trim().Length != 2 ||
+            string.IsNullOrWhiteSpace(request.CurrencyCode))
+            return BadRequest(new { message = "Name, email, country, currency and a password of at least 8 characters are required." });
 
         var email = request.Email.Trim().ToLowerInvariant();
         if (await _context.UserAccounts.AnyAsync(user => user.Email == email))
@@ -32,6 +34,15 @@ public class AuthController : ControllerBase
             PasswordHash = HashPassword(request.Password)
         };
         _context.UserAccounts.Add(user);
+        var profile = await _context.UserProfiles.SingleOrDefaultAsync(item => item.Id == 1);
+        if (profile != null)
+        {
+            profile.DisplayName = user.Name;
+            profile.Email = user.Email;
+            profile.CountryCode = request.CountryCode.Trim().ToUpperInvariant();
+            profile.CurrencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
+            profile.UpdatedAt = DateTime.UtcNow;
+        }
         await _context.SaveChangesAsync();
         return Ok(ToResponse(user));
     }

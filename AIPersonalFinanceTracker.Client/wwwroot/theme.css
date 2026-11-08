@@ -101,6 +101,10 @@ body {
 :root[data-theme="dark"] .form-check-label, :root[data-theme="dark"] .form-label { color: #e8edf5; }
 :root[data-theme="dark"] .btn-outline-primary, :root[data-theme="dark"] .btn-outline-secondary { color: #70d7ca; border-color: #70d7ca; }
 :root[data-theme="dark"] .btn-outline-primary:hover, :root[data-theme="dark"] .btn-outline-secondary:hover { color: #101923; background: #70d7ca; }
+:root[data-theme="dark"] .form-text { color: #b7c5d8 !important; }
+:root[data-theme="dark"] .form-select { color-scheme: dark; }
+:root[data-theme="dark"] .dropdown-menu { background: #1d2738; color: #e8edf5; border-color: #40536d; }
+:root[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(1.8); }
 :root[data-theme="dark"] .alert-info { color: #d7efff; background: #173d55; border-color: #2a7196; }
 :root[data-theme="dark"] .alert-success { color: #d7f7e5; background: #164638; border-color: #2d8a68; }
 :root[data-theme="dark"] .alert-danger { color: #ffe0e4; background: #542630; border-color: #a94b58; }

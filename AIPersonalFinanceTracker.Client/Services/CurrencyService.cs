@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace AIPersonalFinanceTracker.Client.Services;
 
 public class CurrencyService
@@ -13,21 +15,39 @@ public class CurrencyService
         public string Name { get; set; } = "";
     }
 
-    public List<CurrencyOption> Currencies { get; } = new()
+    public List<CurrencyOption> Currencies { get; } = BuildCurrencies();
+
+    private static List<CurrencyOption> BuildCurrencies()
     {
-        new CurrencyOption { Code = "USD", Symbol = "$", Name = "USD ($) - United States Dollar" },
-        new CurrencyOption { Code = "EUR", Symbol = "EUR", Name = "EUR (EUR) - Euro" },
-        new CurrencyOption { Code = "GBP", Symbol = "GBP", Name = "GBP (GBP) - British Pound" },
-        new CurrencyOption { Code = "INR", Symbol = "INR", Name = "INR (INR) - Indian Rupee" },
-        new CurrencyOption { Code = "JPY", Symbol = "JPY", Name = "JPY (JPY) - Japanese Yen" },
-        new CurrencyOption { Code = "CAD", Symbol = "CAD$", Name = "CAD (CAD$) - Canadian Dollar" },
-        new CurrencyOption { Code = "AUD", Symbol = "AUD$", Name = "AUD (AUD$) - Australian Dollar" },
-        new CurrencyOption { Code = "NOK", Symbol = "NOK", Name = "NOK (kr) - Norwegian Krone" },
-        new CurrencyOption { Code = "SEK", Symbol = "SEK", Name = "SEK (kr) - Swedish Krona" },
-        new CurrencyOption { Code = "CHF", Symbol = "CHF", Name = "CHF - Swiss Franc" },
-        new CurrencyOption { Code = "BRL", Symbol = "R$", Name = "BRL (R$) - Brazilian Real" },
-        new CurrencyOption { Code = "AED", Symbol = "AED", Name = "AED - UAE Dirham" }
-    };
+        var currencies = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+            .Select(culture =>
+            {
+                try
+                {
+                    var region = new RegionInfo(culture.Name);
+                    return new CurrencyOption
+                    {
+                        Code = region.ISOCurrencySymbol,
+                        Symbol = region.CurrencySymbol,
+                        Name = $"{region.ISOCurrencySymbol} - {region.CurrencyEnglishName}"
+                    };
+                }
+                catch (ArgumentException)
+                {
+                    return null;
+                }
+            })
+            .Where(currency => currency is not null)
+            .GroupBy(currency => currency!.Code)
+            .Select(group => group.First()!)
+            .OrderBy(currency => currency.Code)
+            .ToList();
+
+        if (currencies.Count == 0)
+            currencies.Add(new CurrencyOption { Code = "USD", Symbol = "$", Name = "USD - United States Dollar" });
+
+        return currencies;
+    }
 
     public void SetCurrency(string code)
     {

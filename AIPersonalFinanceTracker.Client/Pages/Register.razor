@@ -3,6 +3,7 @@
 @using AIPersonalFinanceTracker.Shared.Models
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject CurrencyService Currency
 
 <PageTitle>Create account - AI Personal Finance Tracker</PageTitle>
 
@@ -17,8 +18,27 @@
         <input id="register-name" class="form-control mb-3" @bind="name" autocomplete="name" />
         <label class="form-label" for="register-email">Email</label>
         <input id="register-email" class="form-control mb-3" type="email" @bind="email" autocomplete="email" />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="register-country">Country code</label>
+                <input id="register-country" class="form-control" @bind="countryCode" maxlength="2"
+                       placeholder="e.g. US, IN, GB" autocomplete="country" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="register-currency">Currency</label>
+                <select id="register-currency" class="form-select" @bind="currencyCode">
+                    @foreach (var currency in Currency.Currencies)
+                    {
+                        <option value="@currency.Code">@currency.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="form-text mb-3">Use your two-letter ISO country code; you can change these preferences later.</div>
         <label class="form-label" for="register-password">Password</label>
-        <input id="register-password" class="form-control mb-4" type="password" @bind="password" autocomplete="new-password" />
+        <input id="register-password" class="form-control mb-3" type="password" @bind="password" autocomplete="new-password" />
+        <label class="form-label" for="register-confirm-password">Re-enter password</label>
+        <input id="register-confirm-password" class="form-control mb-4" type="password" @bind="confirmPassword" autocomplete="new-password" />
         <button class="btn btn-primary w-100" @onclick="CreateAccount" disabled="@busy">@(busy ? "Creating..." : "Create account")</button>
         <p class="text-muted mt-4 mb-0">Already registered? <a href="/login">Sign in</a></p>
     </div>
@@ -27,17 +47,33 @@
 @code {
     private string name = "";
     private string email = "";
+    private string countryCode = "US";
+    private string currencyCode = "USD";
     private string password = "";
+    private string confirmPassword = "";
     private string? error;
     private bool busy;
 
     private async Task CreateAccount()
     {
         error = null;
+        countryCode = countryCode.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) ||
+            countryCode.Length != 2 || string.IsNullOrWhiteSpace(currencyCode) ||
+            password.Length < 8 || password != confirmPassword)
+        {
+            error = password != confirmPassword
+                ? "Passwords do not match."
+                : "Enter your name, a valid email, a two-letter country code, currency, and a password of at least 8 characters.";
+            return;
+        }
         busy = true;
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auth/register", new RegisterRequest { Name = name, Email = email, Password = password });
+            var response = await Http.PostAsJsonAsync("api/auth/register", new RegisterRequest
+            {
+                Name = name, Email = email, CountryCode = countryCode, CurrencyCode = currencyCode, Password = password
+            });
             if (!response.IsSuccessStatusCode) { error = await response.Content.ReadAsStringAsync(); return; }
             Navigation.NavigateTo("/login");
         }

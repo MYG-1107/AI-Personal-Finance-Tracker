@@ -22,7 +22,7 @@
         @foreach (var alert in budgetAlerts)
         {
             <div class="alert alert-danger shadow-sm mb-3" role="alert">
-                <strong>⚠️ Budget Limit Exceeded:</strong> Spending in '@alert.CategoryName' has exceeded your budget of $@alert.Budget.ToString("N2") (Current: $@alert.Spent.ToString("N2")).
+                <strong>⚠️ Budget Limit Exceeded:</strong> Spending in '@alert.CategoryName' has exceeded your budget of @Currency.Format(alert.Budget) (Current: @Currency.Format(alert.Spent)).
             </div>
         }
 
@@ -31,21 +31,21 @@
             <div class="col-md-3">
                 <div class="card bg-primary text-white p-3 shadow-sm">
                     <small class="text-uppercase fw-bold">Current Net Balance</small>
-                    <h3 class="mb-0">@(totalBalance < 0 ? $"-${Math.Abs(totalBalance):N2}" : $"${totalBalance:N2}")</h3>
+                    <h3 class="mb-0">@(totalBalance < 0 ? "-" : "")@Currency.Format(totalBalance)</h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card @((forecast?.ProjectedEndOfMonthBalance ?? 0m) < 0 ? "bg-danger" : "bg-dark") text-white p-3 shadow-sm">
                     <small class="text-uppercase fw-bold">Projected Month-End Balance</small>
                     <h3 class="mb-0">
-                        @((forecast?.ProjectedEndOfMonthBalance ?? 0m) < 0 ? $"-${Math.Abs(forecast?.ProjectedEndOfMonthBalance ?? 0m):N2}" : $"${(forecast?.ProjectedEndOfMonthBalance ?? 0m):N2}")
+                        @((forecast?.ProjectedEndOfMonthBalance ?? 0m) < 0 ? "-" : "")@Currency.Format(forecast?.ProjectedEndOfMonthBalance ?? 0m)
                     </h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-warning text-dark p-3 shadow-sm">
                     <small class="text-uppercase fw-bold">Daily Spend Velocity</small>
-                    <h3 class="mb-0">${(forecast?.AverageDailySpend ?? 0m):N2}/day</h3>
+                    <h3 class="mb-0">@Currency.Format(forecast?.AverageDailySpend ?? 0m)/day</h3>
                 </div>
             </div>
             <div class="col-md-3">
@@ -105,9 +105,9 @@
                                             <span class="badge bg-primary">Projected</span>
                                         }
                                     </td>
-                                    <td>${df.DailySpend:N2}</td>
+                                    <td>@Currency.Format(df.DailySpend)</td>
                                     <td class="fw-bold @(df.ProjectedBalance < 0 ? "text-danger" : "text-success")">
-                                        @(df.ProjectedBalance < 0 ? $"-${Math.Abs(df.ProjectedBalance):N2}" : $"${df.ProjectedBalance:N2}")
+                                        @(df.ProjectedBalance < 0 ? "-" : "")@Currency.Format(df.ProjectedBalance)
                                     </td>
                                 </tr>
                             }
@@ -143,7 +143,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
                                 <strong>@item.CategoryName</strong>
-                                <span class="text-muted">${item.Spent:N2} / ${item.Budget:N2}</span>
+                                <span class="text-muted">@Currency.Format(item.Spent) / @Currency.Format(item.Budget)</span>
                             </div>
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar @(isExceeded ? "bg-danger" : percentage > 80 ? "bg-warning" : "bg-info")" 
