@@ -11,7 +11,7 @@ with open('AIPersonalFinanceTracker.Client/wwwroot/index.html', 'w') as f:
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Personal Finance Tracker</title>
+    <title>Personal Finance Intelligence</title>
     <base href="/" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 </head>
@@ -75,7 +75,7 @@ with open('AIPersonalFinanceTracker.Client/Layout/MainLayout.razor', 'w') as f:
 <div class="page">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#">AI Personal Finance Tracker</a>
+            <a class="navbar-brand fw-bold" href="#">Personal Finance Intelligence</a>
         </div>
     </nav>
     <main class="container-fluid px-4">

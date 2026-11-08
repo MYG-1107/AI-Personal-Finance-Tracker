@@ -80,7 +80,7 @@ about_code = """@page "/about"
 
 <div class="container py-4">
     <div class="card shadow-sm border-0 p-4 mb-4">
-        <h2 class="fw-bold text-primary mb-3">About the AI Personal Finance Tracker</h2>
+        <h2 class="fw-bold text-primary mb-3">About Personal Finance Intelligence</h2>
         <p class="lead text-secondary">
             An autonomous, privacy-focused financial intelligence platform designed to simplify expense management, automate categorization, detect abnormal spending, and forecast cash flow using local Machine Learning.
         </p>

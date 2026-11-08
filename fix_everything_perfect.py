@@ -139,7 +139,7 @@ with open('AIPersonalFinanceTracker.Client/Pages/Transactions.razor', 'w') as f:
 @using AIPersonalFinanceTracker.Shared.Models
 @inject HttpClient Http
 
-<PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
+<PageTitle>Transactions - Personal Finance Intelligence</PageTitle>
 
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center mb-4">

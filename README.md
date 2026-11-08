@@ -1,6 +1,6 @@
-# AI Personal Finance Tracker
+# Personal Finance Intelligence
 
-AI Personal Finance Tracker is a privacy-focused personal finance platform for recording transactions, managing budgets and savings goals, understanding recurring costs, and turning financial history into useful planning insights.
+Personal Finance Intelligence is a privacy-focused personal finance platform for recording transactions, managing budgets and savings goals, understanding recurring costs, and turning financial history into useful planning insights.
 
 The project is a full-stack .NET application with a Blazor WebAssembly client, ASP.NET Core API, SQLite persistence, and ML.NET services. It is designed to run locally or as a containerized web application.
 

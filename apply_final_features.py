@@ -8,7 +8,7 @@ with open('AIPersonalFinanceTracker.Client/Pages/Transactions.razor', 'w') as f:
 @using System.Net.Http.Json
 @inject HttpClient Http
 
-<PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
+<PageTitle>Transactions - Personal Finance Intelligence</PageTitle>
 
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -275,7 +275,7 @@ with open('AIPersonalFinanceTracker.Client/Layout/MainLayout.razor', 'w') as f:
 <div class="page">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 px-3">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="/">AI Personal Finance Tracker</a>
+            <a class="navbar-brand fw-bold" href="/">Personal Finance Intelligence</a>
             <div class="navbar-nav">
                 <a class="nav-link text-white fw-semibold me-3" href="/">Dashboard</a>
                 <a class="nav-link text-white fw-semibold" href="/transactions">Transactions & Input Form</a>
