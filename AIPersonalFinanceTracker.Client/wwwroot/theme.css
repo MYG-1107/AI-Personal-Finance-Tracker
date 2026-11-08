@@ -25,6 +25,13 @@ h6:focus, h6:focus-visible {
     outline: 0 !important;
     box-shadow: none !important;
 }
+h1[tabindex="-1"], h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible,
+h2[tabindex="-1"], h2[tabindex="-1"]:focus, h2[tabindex="-1"]:focus-visible,
+h3[tabindex="-1"], h3[tabindex="-1"]:focus, h3[tabindex="-1"]:focus-visible {
+    outline: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
 .app-header { background: #17212b; min-height: 72px; box-shadow: 0 5px 20px rgba(23,33,43,.12); }
 .app-brand { display: flex; align-items: center; gap: .7rem; color: #fff; font-size: 1.05rem; line-height: 1.05; }
 .app-brand:hover { color: #fff; }
