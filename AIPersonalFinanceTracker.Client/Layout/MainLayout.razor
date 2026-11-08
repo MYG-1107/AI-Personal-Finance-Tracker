@@ -46,6 +46,7 @@
     {
         darkMode = !darkMode;
         JS.InvokeVoidAsync("setTheme", darkMode ? "dark" : "light");
+        JS.InvokeVoidAsync("localStorage.setItem", "finance.theme", darkMode ? "dark" : "light");
     }
 
     protected override async Task OnInitializedAsync()
@@ -56,6 +57,9 @@
             await JS.InvokeVoidAsync("localStorage.removeItem", "finance.user");
             var signedIn = await JS.InvokeAsync<string?>("sessionStorage.getItem", "finance.user");
             isAuthenticated = !string.IsNullOrWhiteSpace(signedIn);
+            var savedTheme = await JS.InvokeAsync<string?>("localStorage.getItem", "finance.theme");
+            darkMode = savedTheme == "dark";
+            await JS.InvokeVoidAsync("setTheme", darkMode ? "dark" : "light");
             if (!isAuthenticated && path is not "/login" and not "/register")
             {
                 Navigation.NavigateTo("/login");

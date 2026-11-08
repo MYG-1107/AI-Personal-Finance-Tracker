@@ -69,6 +69,13 @@ body {
 }
 :root[data-theme="dark"] {
     color-scheme: dark;
+    --ink: #f3f7fb;
+    --muted: #b7c5d8;
+    --canvas: #0e1624;
+    --surface: #1b293d;
+    --line: #40536d;
+    --brand: #35cdb7;
+    --brand-dark: #75e4d3;
 }
 :root[data-theme="dark"] body {
     background: #121826;
@@ -98,6 +105,20 @@ body {
 :root[data-theme="dark"] .alert-success { color: #d7f7e5; background: #164638; border-color: #2d8a68; }
 :root[data-theme="dark"] .alert-danger { color: #ffe0e4; background: #542630; border-color: #a94b58; }
 :root[data-theme="dark"] .bg-white { background-color: #1d2738 !important; color: #e8edf5; }
+:root[data-theme="dark"] .card h5,
+:root[data-theme="dark"] .surface-panel h2,
+:root[data-theme="dark"] .surface-panel h3,
+:root[data-theme="dark"] .surface-panel h4,
+:root[data-theme="dark"] .surface-panel h5,
+:root[data-theme="dark"] .metric-label { color: #f3f7fb; }
+:root[data-theme="dark"] .metric-card:not(.metric-card-primary) .metric-value { color: #77e7d6 !important; }
+:root[data-theme="dark"] .progress { background: #34445a; }
+:root[data-theme="dark"] .border { border-color: #40536d !important; }
+:root[data-theme="dark"] a { color: #7de8d8; }
+:root[data-theme="dark"] .btn-primary { background: #19a995; border-color: #19a995; color: #061c1a; }
+:root[data-theme="dark"] .btn-success { background: #25a875; border-color: #25a875; color: #061c1a; }
+:root[data-theme="dark"] input[readonly] { background-color: #25344b !important; color: #b7c5d8; }
+:root[data-theme="dark"] .form-check-input { background-color: #25344b; border-color: #6b819d; }
 .donut-chart {
     width: 190px;
     height: 190px;

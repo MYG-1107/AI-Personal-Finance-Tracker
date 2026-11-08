@@ -39,7 +39,8 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" for="email">Email</label>
-                            <input id="email" type="email" class="form-control" @bind="profile.Email" maxlength="160" />
+                            <input id="email" type="email" class="form-control" @bind="profile.Email" maxlength="160" readonly />
+                            <small class="text-muted">This is the email used for your account.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" for="country">Country code</label>
