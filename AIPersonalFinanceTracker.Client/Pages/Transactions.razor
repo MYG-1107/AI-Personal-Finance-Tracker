@@ -195,7 +195,7 @@
                                 </td>
                                 <td><span class="badge bg-secondary">@GetCategoryName(tx.CategoryId)</span></td>
                                 <td>
-                                    @if (tx.IsAnomaly)
+                                    @if (tx.Amount < 0 && tx.IsAnomaly)
                                     {
                                         <span class="badge bg-warning text-dark" title="@tx.AnomalyReason">⚠️ Anomaly: @tx.AnomalyReason</span>
                                     }

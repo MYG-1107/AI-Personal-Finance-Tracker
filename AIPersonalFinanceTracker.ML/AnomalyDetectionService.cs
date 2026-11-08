@@ -18,6 +18,11 @@ public class AnomalyDetectionService
 
     public AnomalyResult DetectAnomaly(Transaction transaction, IEnumerable<Transaction> history)
     {
+        if (transaction.Amount >= 0)
+        {
+            return new AnomalyResult();
+        }
+
         var comparableAmounts = history
             .Where(item => item.Amount < 0)
             .Select(item => Math.Abs(item.Amount))
