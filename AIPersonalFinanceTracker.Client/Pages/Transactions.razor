@@ -9,11 +9,14 @@
 
 <PageTitle>Transactions - AI Personal Finance Tracker</PageTitle>
 
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold m-0">Transaction Management & ML Ingestion</h2>
-        <a href="/" class="btn btn-outline-primary">← Back to Dashboard</a>
+<div class="page-intro">
+    <div>
+        <p class="eyebrow">LEDGER & AUTOMATION</p>
+        <h1>Transactions</h1>
+        <p class="page-subtitle">Capture spending quickly, then let AI keep your records organized.</p>
     </div>
+    <a href="/" class="btn btn-outline-primary">← Overview</a>
+</div>
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -32,8 +35,11 @@
     }
 
     <!-- Transaction Entry Form -->
-    <div class="card shadow-sm border-0 p-4 mb-4">
-        <h5 class="fw-bold mb-3">Add New Transaction</h5>
+    <div class="surface-panel form-panel mb-4">
+        <div class="panel-heading">
+            <div><p class="eyebrow mb-1">QUICK CAPTURE</p><h2>Add a transaction</h2></div>
+            <span class="panel-kicker">AI assisted</span>
+        </div>
         <div class="input-group mb-3">
             <input class="form-control" @bind="smartText" placeholder="Smart Add: Spent 450 INR on groceries at Reliance Fresh yesterday" />
             <button class="btn btn-outline-primary" @onclick="ParseSmartAdd" disabled="@string.IsNullOrWhiteSpace(smartText)">🤖 Parse</button>
@@ -49,18 +55,20 @@
                 <strong>@smartPreview.Amount.ToString("N2") @smartPreview.CurrencyCode</strong>
                 (@smartPreview.SuggestedCategoryName). Review the fields below and save.</div>
         }
-        <div class="row g-3">
+        <div class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label for="tx-description" class="form-label fw-semibold">Description</label>
                 <input id="tx-description" type="text" class="form-control" @bind="newDescription" @bind:event="oninput" @onkeyup="PredictCategory" placeholder="e.g. Starbucks Coffee, Walmart Groceries, Uber" />
             </div>
-            <div class="form-check mt-3">
+            <div class="col-md-4">
+                <div class="form-check recurring-control">
                 <input id="recurring" class="form-check-input" type="checkbox" @bind="isRecurring" />
                 <label class="form-check-label" for="recurring">Repeat monthly</label>
                 @if (isRecurring)
                 {
-                    <input class="form-control d-inline-block ms-3" style="width: 110px" type="number" min="1" max="31" @bind="recurrenceDay" aria-label="Day of month" />
+                    <input class="form-control recurring-day" type="number" min="1" max="31" @bind="recurrenceDay" aria-label="Day of month" />
                 }
+                </div>
             </div>
             <div class="col-md-2">
                 <label for="tx-amount" class="form-label fw-semibold">Amount ($)</label>
@@ -97,16 +105,16 @@
                 }
             </div>
         </div>
-        <div class="mt-3">
+        <div class="mt-4">
             <button class="btn btn-success px-4 fw-semibold" @onclick="SaveTransaction"
                     disabled="@(!CanSaveTransaction)">Add Transaction</button>
         </div>
     </div>
 
     <!-- Transaction History Table -->
-    <div class="card shadow-sm border-0 p-4">
+    <div class="surface-panel">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h5 class="fw-bold m-0">Transaction History <span class="badge bg-secondary">@FilteredTransactions.Count()</span></h5>
+            <div><p class="eyebrow mb-1">YOUR LEDGER</p><h2 class="mb-0">Transaction history <span class="count-badge">@FilteredTransactions.Count()</span></h2></div>
             <button class="btn btn-outline-success btn-sm" @onclick="ExportCsv" disabled="@(transactions == null || !FilteredTransactions.Any())">
                 Export CSV
             </button>
@@ -196,7 +204,6 @@
             </div>
         }
     </div>
-</div>
 
 @code {
     private List<Transaction>? transactions;

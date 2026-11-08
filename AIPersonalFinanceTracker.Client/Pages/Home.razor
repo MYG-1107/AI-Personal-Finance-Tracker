@@ -5,34 +5,46 @@
 
 <PageTitle>Financial Dashboard</PageTitle>
 
-<div class="container-fluid py-3">
-    <h2 class="fw-bold mb-4">Financial Summary & Intelligence Dashboard</h2>
-
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small fw-semibold">Total Balance</div>
-                <div class="fs-2 fw-bold text-success">$@TotalBalance.ToString("N2")</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small fw-semibold">Total Income</div>
-                <div class="fs-2 fw-bold text-success">+$@TotalIncome.ToString("N2")</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small fw-semibold">Total Expenses</div>
-                <div class="fs-2 fw-bold text-danger">-$@TotalExpenses.ToString("N2")</div>
-            </div>
-        </div>
+<div class="page-intro">
+    <div>
+        <p class="eyebrow">YOUR FINANCIAL COMMAND CENTER</p>
+        <h1>Financial summary</h1>
+        <p class="page-subtitle">A clear view of your money, momentum, and monthly limits.</p>
     </div>
+    <a class="btn btn-primary" href="/transactions">+ Add transaction</a>
+</div>
 
-    <div class="row g-3">
+<div class="row g-3 mb-4 metric-grid">
+        <div class="col-md-4">
+            <div class="metric-card metric-card-primary">
+                <div class="metric-label">Total balance</div>
+                <div class="metric-value">$@TotalBalance.ToString("N2")</div>
+                <div class="metric-note">Available across your accounts</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Total income</div>
+                <div class="metric-value text-success">+$@TotalIncome.ToString("N2")</div>
+                <div class="metric-note">Money in this period</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Total expenses</div>
+                <div class="metric-value text-danger">-$@TotalExpenses.ToString("N2")</div>
+                <div class="metric-note">Money out this period</div>
+            </div>
+        </div>
+</div>
+
+<div class="row g-4 dashboard-panels">
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h5 class="fw-bold mb-3">Spending Breakdown by Category</h5>
+            <div class="surface-panel h-100">
+                <div class="panel-heading">
+                    <div><p class="eyebrow mb-1">WHERE IT GOES</p><h2>Spending breakdown</h2></div>
+                    <span class="panel-kicker">By category</span>
+                </div>
                 <div style="height: 240px;" class="mb-3">
                     <canvas id="spending-chart" aria-label="Spending by category chart"></canvas>
                 </div>
@@ -57,8 +69,11 @@
         </div>
 
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h5 class="fw-bold mb-3">Expense Budget Limits</h5>
+            <div class="surface-panel h-100">
+                <div class="panel-heading">
+                    <div><p class="eyebrow mb-1">MONTHLY GUARDRAILS</p><h2>Budget limits</h2></div>
+                    <span class="panel-kicker">Live status</span>
+                </div>
                 @if (Categories != null && Categories.Any(c => c.Type == "Expense"))
                 {
                     @foreach (var cat in Categories.Where(c => c.Type == "Expense"))
@@ -80,7 +95,6 @@
             </div>
         </div>
     </div>
-</div>
 
 @code {
     private decimal TotalBalance = 4679.05m;

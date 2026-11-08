@@ -4,20 +4,25 @@
 @inject IJSRuntime JS
 
 <div class="page">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 px-3">
+    <nav class="app-header navbar navbar-expand-lg navbar-dark px-3">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="/">AI Personal Finance Tracker</a>
-            <div class="navbar-nav">
-                <a class="nav-link text-white fw-semibold me-3" href="/">Dashboard</a>
-                <a class="nav-link text-white fw-semibold" href="/transactions">Transactions & Input Form</a>
-                <a class="nav-link text-white fw-semibold ms-3" href="/profile">Profile</a>
-                <a class="nav-link text-white fw-semibold ms-3" href="/goals">Goals</a>
-                <a class="nav-link text-white fw-semibold ms-3" href="/advisor">AI Advisor</a>
-                <button class="btn btn-sm btn-outline-light ms-3" @onclick="ToggleTheme">@((darkMode) ? "Light mode" : "Dark mode")</button>
+            <a class="navbar-brand app-brand" href="/">
+                <span class="brand-mark">AI</span>
+                <span><strong>Finance</strong><small>Personal intelligence</small></span>
+            </a>
+            <div class="navbar-nav app-nav">
+                <a class="nav-link" href="/">Overview</a>
+                <a class="nav-link" href="/transactions">Transactions</a>
+                <a class="nav-link" href="/profile">Profile</a>
+                <a class="nav-link" href="/goals">Goals</a>
+                <a class="nav-link" href="/advisor">AI Advisor</a>
+                <button class="theme-toggle" @onclick="ToggleTheme" aria-label="Toggle color theme">
+                    <span aria-hidden="true">☼</span> @((darkMode) ? "Light" : "Dark")
+                </button>
             </div>
         </div>
     </nav>
-    <main class="container-fluid px-4">
+    <main class="app-main container-fluid">
         @Body
     </main>
 </div>
