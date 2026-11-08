@@ -25,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=finance.db"));
 
 builder.Services.AddScoped<CategoryPredictorService>();
+builder.Services.AddScoped<CategorizationService>();
 builder.Services.AddScoped<AnomalyDetectionService>();
 builder.Services.AddScoped<ForecastService>();
 builder.Services.AddScoped<OcrReceiptService>();

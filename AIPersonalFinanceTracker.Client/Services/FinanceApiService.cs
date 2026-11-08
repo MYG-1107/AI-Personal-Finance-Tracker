@@ -51,9 +51,13 @@ public class FinanceApiService
     public async Task<UserProfile?> UpdateProfileAsync(UserProfile profile)
     {
         var response = await _http.PutAsJsonAsync("api/profile", profile);
-        return response.IsSuccessStatusCode
-            ? await response.Content.ReadFromJsonAsync<UserProfile>()
-            : null;
+        if (response.IsSuccessStatusCode)
+            return await response.Content.ReadFromJsonAsync<UserProfile>();
+
+        var message = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException(string.IsNullOrWhiteSpace(message)
+            ? $"Profile update failed ({(int)response.StatusCode})."
+            : message);
     }
 
     public async Task<List<SavingsGoal>> GetGoalsAsync() =>
