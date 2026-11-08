@@ -1,9 +1,13 @@
 using AIPersonalFinanceTracker.Shared.Models;
+using Microsoft.ML;
+using Microsoft.ML.Transforms.TimeSeries;
 
 namespace AIPersonalFinanceTracker.ML;
 
 public class ForecastService
 {
+    private readonly MLContext _mlContext = new();
+
     public CashFlowForecastDto PredictCashFlow(List<Transaction> transactions, List<Category> categories)
     {
         var forecast = new CashFlowForecastDto();
@@ -18,24 +22,32 @@ public class ForecastService
         decimal totalExpense = transactions.Where(t => t.Amount < 0).Sum(t => Math.Abs(t.Amount));
         decimal currentBalance = totalIncome - totalExpense;
 
-        decimal dailyBurnRate = currentDay > 0 ? totalExpense / currentDay : 0;
+        var fallbackDailySpend = currentDay > 0 ? totalExpense / currentDay : 0;
+        var predictedDailySpend = ForecastDailyExpenses(transactions, now, remainingDays, fallbackDailySpend);
+        var dailyBurnRate = predictedDailySpend.Count > 0
+            ? predictedDailySpend.Average()
+            : fallbackDailySpend;
+
         forecast.PredictedDailyBurnRate = dailyBurnRate;
         forecast.AverageDailySpend = dailyBurnRate;
         forecast.CurrentBalance = currentBalance;
 
-        decimal projectedAdditionalExpense = dailyBurnRate * remainingDays;
+        decimal projectedAdditionalExpense = predictedDailySpend.Sum();
         forecast.ProjectedMonthlyExpenses = totalExpense + projectedAdditionalExpense;
         forecast.ProjectedEndOfMonthBalance = currentBalance - projectedAdditionalExpense;
 
         decimal runningBalance = currentBalance;
         for (int i = 1; i <= remainingDays; i++)
         {
-            runningBalance -= dailyBurnRate;
+            var dailySpend = predictedDailySpend.Count > i - 1
+                ? predictedDailySpend[i - 1]
+                : dailyBurnRate;
+            runningBalance -= dailySpend;
             forecast.DailyForecasts.Add(new DailyForecastDto
             {
                 Date = now.AddDays(i),
-                Amount = dailyBurnRate,
-                DailySpend = dailyBurnRate,
+                Amount = dailySpend,
+                DailySpend = dailySpend,
                 ProjectedBalance = runningBalance,
                 IsHistorical = false
             });
@@ -79,5 +91,81 @@ public class ForecastService
         }
 
         return forecast;
+    }
+
+    private List<decimal> ForecastDailyExpenses(
+        IReadOnlyCollection<Transaction> transactions,
+        DateTime now,
+        int horizon,
+        decimal fallbackDailySpend)
+    {
+        if (horizon <= 0)
+            return new List<decimal>();
+
+        var startDate = transactions.Count > 0
+            ? transactions.Min(t => t.Date).Date
+            : now.Date;
+        var numberOfDays = (now.Date - startDate).Days + 1;
+        if (numberOfDays < 7)
+            return Enumerable.Repeat(fallbackDailySpend, horizon).ToList();
+
+        var dailyExpenses = Enumerable.Range(0, numberOfDays)
+            .Select(offset =>
+            {
+                var date = startDate.AddDays(offset);
+                return (float)transactions
+                    .Where(t => t.Date.Date == date && t.Amount < 0)
+                    .Sum(t => Math.Abs(t.Amount));
+            })
+            .ToList();
+
+        try
+        {
+            var data = _mlContext.Data.LoadFromEnumerable(
+                dailyExpenses.Select(value => new ExpensePoint { Value = value }));
+            var windowSize = Math.Clamp(dailyExpenses.Count / 3, 2, 7);
+            var pipeline = _mlContext.Forecasting.ForecastBySsa(
+                outputColumnName: nameof(ExpenseForecast.Forecast),
+                inputColumnName: nameof(ExpensePoint.Value),
+                windowSize: windowSize,
+                seriesLength: dailyExpenses.Count,
+                trainSize: dailyExpenses.Count,
+                horizon: horizon,
+                confidenceLevel: 0.95f,
+                confidenceLowerBoundColumn: null,
+                confidenceUpperBoundColumn: null);
+            var model = pipeline.Fit(data);
+            var forecast = model.Transform(data);
+            var values = _mlContext.Data.CreateEnumerable<ExpenseForecast>(forecast, reuseRowObject: false)
+                .FirstOrDefault()?.Forecast;
+
+            if (values is { Length: > 0 })
+            {
+                return values
+                    .Take(horizon)
+                    .Select(value => Math.Max(0, (decimal)value))
+                    .ToList();
+            }
+        }
+        catch (ArgumentException)
+        {
+            // Sparse or constant histories can be unsuitable for SSA.
+        }
+        catch (InvalidOperationException)
+        {
+            // Keep the API usable when a history cannot produce a model.
+        }
+
+        return Enumerable.Repeat(fallbackDailySpend, horizon).ToList();
+    }
+
+    private sealed class ExpensePoint
+    {
+        public float Value { get; set; }
+    }
+
+    private sealed class ExpenseForecast
+    {
+        public float[] Forecast { get; set; } = Array.Empty<float>();
     }
 }
