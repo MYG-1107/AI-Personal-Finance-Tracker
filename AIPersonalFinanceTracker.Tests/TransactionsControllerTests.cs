@@ -61,6 +61,21 @@ public class TransactionsControllerTests
     }
 
     [Fact]
+    public async Task AddTransaction_AssignsIncomeCategory()
+    {
+        var result = await _controller.AddTransaction(new TransactionCreateDto
+        {
+            Description = "Monthly salary from Google",
+            Amount = 1500m
+        });
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var transaction = Assert.IsType<Transaction>(okResult.Value);
+        Assert.Equal(3, transaction.CategoryId);
+        Assert.True(transaction.IsAutoCategorized);
+    }
+
+    [Fact]
     public void DependencyInjection_CanActivateController()
     {
         var services = new ServiceCollection();

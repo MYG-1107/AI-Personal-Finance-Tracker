@@ -82,6 +82,11 @@ public class TransactionsController : ControllerBase
                 transaction.CategoryId = predId > 0 ? predId : null;
                 transaction.IsAutoCategorized = predId > 0;
             }
+            else if (amt > 0 && (!transaction.CategoryId.HasValue || transaction.CategoryId == 0))
+            {
+                transaction.CategoryId = 3;
+                transaction.IsAutoCategorized = true;
+            }
 
             var transactionHistory = await _context.Transactions
                 .AsNoTracking()
@@ -216,8 +221,12 @@ public class TransactionsController : ControllerBase
                     Description = row.Description.Trim(),
                     Amount = row.Amount,
                     Date = row.Date ?? DateTime.UtcNow,
-                    CategoryId = _categoryPredictor.PredictCategory(row.Description) is var category && category > 0 ? category : null,
-                    IsAutoCategorized = true
+                    CategoryId = row.Amount > 0
+                        ? 3
+                        : _categoryPredictor.PredictCategory(row.Description) is var category && category > 0
+                            ? category
+                            : null,
+                    IsAutoCategorized = row.Amount > 0 || _categoryPredictor.PredictCategory(row.Description) > 0
                 };
                 var anomaly = _anomalyDetector.DetectAnomaly(transaction, imported);
                 transaction.IsAnomaly = anomaly.IsAnomaly;

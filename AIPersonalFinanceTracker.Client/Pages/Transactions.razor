@@ -193,7 +193,7 @@
                                 <td class="@(tx.Amount >= 0 ? "text-success" : "text-danger") fw-bold">
                                     @(tx.Amount >= 0 ? "+" : "-")@Currency.Format(tx.Amount)
                                 </td>
-                                <td><span class="badge bg-secondary">@GetCategoryName(tx.CategoryId)</span></td>
+                                <td><span class="badge bg-secondary">@GetCategoryName(tx.CategoryId, tx.Amount)</span></td>
                                 <td>
                                     @if (tx.Amount < 0 && tx.IsAnomaly)
                                     {
@@ -478,7 +478,7 @@
         rows.AddRange(FilteredTransactions.Select(t =>
             string.Join(",", Csv(t.Date.ToString("yyyy-MM-dd")), Csv(t.Description),
                 t.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
-                Csv(GetCategoryName(t.CategoryId)), t.Amount >= 0 ? "Income" : "Expense",
+                Csv(GetCategoryName(t.CategoryId, t.Amount)), t.Amount >= 0 ? "Income" : "Expense",
                 Csv(t.IsAutoCategorized ? "AI Categorized" : "Needs Review"))));
         await JS.InvokeVoidAsync("downloadFile", "transactions.csv", string.Join("\n", rows));
     }
@@ -490,13 +490,14 @@
         newAmount != 0 &&
         (transactionType == "Income" || selectedCategoryId.HasValue || predictedCategoryId > 0);
 
-    private string GetCategoryName(int? catId) => catId switch
+    private string GetCategoryName(int? catId, decimal amount = -1) => catId switch
     {
         1 => "Groceries & Food",
         2 => "Utilities & Bills",
         3 => "Salary & Income",
         4 => "Entertainment",
         5 => "Transport & Travel",
+        _ when amount >= 0 => "Salary & Income",
         _ => "Uncategorized"
     };
 }
