@@ -15,7 +15,11 @@ body {
     overflow-x: hidden;
 }
 html { scrollbar-width: thin; scrollbar-color: #9fb4bd var(--canvas); }
-h1:focus, main:focus { outline: none; }
+:where(main, h1, h2, h3, h4, h5, h6):focus,
+:where(main, h1, h2, h3, h4, h5, h6):focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
 .app-header { background: #17212b; min-height: 72px; box-shadow: 0 5px 20px rgba(23,33,43,.12); }
 .app-brand { display: flex; align-items: center; gap: .7rem; color: #fff; font-size: 1.05rem; line-height: 1.05; }
 .app-brand:hover { color: #fff; }
