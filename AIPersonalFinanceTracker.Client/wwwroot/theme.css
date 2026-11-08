@@ -15,9 +15,14 @@ body {
     overflow-x: hidden;
 }
 html { scrollbar-width: thin; scrollbar-color: #9fb4bd var(--canvas); }
-:where(main, h1, h2, h3, h4, h5, h6):focus,
-:where(main, h1, h2, h3, h4, h5, h6):focus-visible {
-    outline: none !important;
+main:focus, main:focus-visible,
+h1:focus, h1:focus-visible,
+h2:focus, h2:focus-visible,
+h3:focus, h3:focus-visible,
+h4:focus, h4:focus-visible,
+h5:focus, h5:focus-visible,
+h6:focus, h6:focus-visible {
+    outline: 0 !important;
     box-shadow: none !important;
 }
 .app-header { background: #17212b; min-height: 72px; box-shadow: 0 5px 20px rgba(23,33,43,.12); }
