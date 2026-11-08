@@ -118,6 +118,7 @@
     };
 
     private List<TransactionDto> Transactions = new();
+    private bool chartRendered;
 
     protected override async Task OnInitializedAsync()
     {
@@ -146,7 +147,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || Categories.Count == 0 || !Transactions.Any(t => t.Amount < 0))
+        if (chartRendered || Categories.Count == 0 || !Transactions.Any(t => t.Amount < 0))
             return;
 
         var expenseCategories = Categories.Where(category => category.Type == "Expense").ToList();
@@ -155,6 +156,7 @@
             "spending-chart",
             expenseCategories.Select(category => category.Name).ToArray(),
             expenseCategories.Select(category => (double)GetCategorySpent(category.Id)).ToArray());
+        chartRendered = true;
     }
 
     private decimal GetCategorySpent(int categoryId)
