@@ -1,5 +1,6 @@
 using AIPersonalFinanceTracker.Api.Data;
 using AIPersonalFinanceTracker.Shared.Models;
+using AIPersonalFinanceTracker.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,8 +11,13 @@ namespace AIPersonalFinanceTracker.Api.Controllers;
 public class AdvisorController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly FinancialAdvisorService _advisor;
 
-    public AdvisorController(AppDbContext context) => _context = context;
+    public AdvisorController(AppDbContext context, FinancialAdvisorService advisor)
+    {
+        _context = context;
+        _advisor = advisor;
+    }
 
     [HttpPost("ask")]
     public async Task<ActionResult<AdvisorResponse>> Ask(AdvisorRequest request)
@@ -21,58 +27,7 @@ public class AdvisorController : ControllerBase
 
         var transactions = await _context.Transactions.AsNoTracking().ToListAsync();
         var categories = await _context.Categories.AsNoTracking().ToDictionaryAsync(c => c.Id, c => c.Name);
-        if (transactions.Count == 0)
-            return Ok(new AdvisorResponse { Answer = "Add a few transactions and I will turn them into personalized insights." });
-
-        var question = request.Question.ToLowerInvariant();
-        var expenses = transactions.Where(t => t.Amount < 0).ToList();
-        var top = expenses.GroupBy(t => t.CategoryId).OrderByDescending(g => g.Sum(t => Math.Abs(t.Amount))).FirstOrDefault();
-        var topSpend = top?.Sum(t => Math.Abs(t.Amount)) ?? 0;
-        var totalSpend = expenses.Sum(t => Math.Abs(t.Amount));
-        var weekSpend = expenses.Where(t => t.Date >= DateTime.UtcNow.AddDays(-7)).Sum(t => Math.Abs(t.Amount));
-        var currentMonth = DateTime.UtcNow.Month;
-        var previousMonth = DateTime.UtcNow.AddMonths(-1).Month;
-
-        if (question.Contains("most") || question.Contains("top") || question.Contains("where"))
-        {
-            return Ok(new AdvisorResponse
-            {
-                Answer = $"Your largest spending area is {GetCategoryName(top?.Key, categories)}, totaling {topSpend:N2}.",
-                Highlights = new() { $"Total tracked spending: {totalSpend:N2}", $"Last 7 days: {weekSpend:N2}" }
-            });
-        }
-
-        if (question.Contains("transport") || question.Contains("travel"))
-        {
-            var transport = expenses.Where(t => t.CategoryId == 5).Sum(t => Math.Abs(t.Amount));
-            return Ok(new AdvisorResponse
-            {
-                Answer = $"Transport spending is {transport:N2}. Consider setting a category budget and reviewing recurring trips.",
-                Highlights = new() { $"Transport share: {(totalSpend == 0 ? 0 : transport / totalSpend * 100):N1}%", "Review high-value travel transactions first." }
-            });
-        }
-
-        if (question.Contains("month") && (question.Contains("more") || question.Contains("compare")))
-        {
-            var current = expenses.Where(t => t.Date.Month == currentMonth).Sum(t => Math.Abs(t.Amount));
-            var previous = expenses.Where(t => t.Date.Month == previousMonth).Sum(t => Math.Abs(t.Amount));
-            var direction = current >= previous ? "more" : "less";
-            return Ok(new AdvisorResponse
-            {
-                Answer = $"This month you spent {current:N2}, which is {direction} than last month ({previous:N2}).",
-                Highlights = new() { $"Difference: {Math.Abs(current - previous):N2}", "Use the transaction filters to inspect the change." }
-            });
-        }
-
-        return Ok(new AdvisorResponse
-        {
-            Answer = $"You have tracked {transactions.Count} transactions and {totalSpend:N2} in expenses. A good next step is to set a savings goal and review the highest category.",
-            Highlights = new() { $"Income: {transactions.Where(t => t.Amount > 0).Sum(t => t.Amount):N2}", $"Last 7 days: {weekSpend:N2}" }
-        });
+        var goals = await _context.SavingsGoals.AsNoTracking().ToListAsync();
+        return Ok(_advisor.Answer(request.Question, transactions, categories, goals));
     }
-
-    private static string GetCategoryName(int? categoryId, IReadOnlyDictionary<int, string> categories) =>
-        categoryId.HasValue && categories.TryGetValue(categoryId.Value, out var name)
-            ? name
-            : "Uncategorized";
 }

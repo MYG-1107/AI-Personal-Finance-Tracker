@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
+    public DbSet<BudgetWorkspace> BudgetWorkspaces => Set<BudgetWorkspace>();
+    public DbSet<BudgetMember> BudgetMembers => Set<BudgetMember>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

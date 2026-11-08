@@ -81,7 +81,11 @@ public class TransactionsController : ControllerBase
                 transaction.IsAutoCategorized = predId > 0;
             }
 
-            var anomaly = _anomalyDetector.DetectAnomaly(transaction);
+            var transactionHistory = await _context.Transactions
+                .AsNoTracking()
+                .Where(item => item.Date >= transaction.Date.AddDays(-90))
+                .ToListAsync();
+            var anomaly = _anomalyDetector.DetectAnomaly(transaction, transactionHistory);
             transaction.IsAnomaly = anomaly.IsAnomaly;
             transaction.AnomalyReason = anomaly.Reason;
 
@@ -146,16 +150,26 @@ public class TransactionsController : ControllerBase
 
         var currencyMatch = Regex.Match(text, @"\b(USD|INR|EUR|GBP|NOK|SEK|CAD|AUD|JPY|CHF|AED|BRL)\b", RegexOptions.IgnoreCase);
         var currency = currencyMatch.Success ? currencyMatch.Value.ToUpperInvariant() : "USD";
-        var date = text.Contains("yesterday", StringComparison.OrdinalIgnoreCase)
-            ? DateTime.UtcNow.Date.AddDays(-1)
-            : DateTime.UtcNow;
-        var description = Regex.Replace(text, @"\b(spent|paid|bought|purchase|on|for|today|yesterday)\b", "", RegexOptions.IgnoreCase)
+        var dateMatch = Regex.Match(text, @"\b(20\d{2}[-/]\d{1,2}[-/]\d{1,2})\b");
+        var date = dateMatch.Success && DateTime.TryParse(dateMatch.Value, out var parsedDate)
+            ? parsedDate.ToUniversalTime()
+            : text.Contains("yesterday", StringComparison.OrdinalIgnoreCase)
+                ? DateTime.UtcNow.Date.AddDays(-1)
+                : DateTime.UtcNow;
+        var merchantMatch = Regex.Match(text, @"\b(?:at|from)\s+(?<merchant>[A-Za-z][A-Za-z0-9 &'-]{1,40})", RegexOptions.IgnoreCase);
+        var merchant = merchantMatch.Success
+            ? merchantMatch.Groups["merchant"].Value.Trim(' ', '.', ',', ':')
+            : string.Empty;
+        var description = Regex.Replace(text, @"\b(spent|paid|bought|purchase|on|for|today|yesterday|at|from|via)\b", "", RegexOptions.IgnoreCase)
             .Trim(' ', ',', '.', ':');
+        if (dateMatch.Success)
+            description = description.Replace(dateMatch.Value, string.Empty, StringComparison.OrdinalIgnoreCase).Trim(' ', ',', '.', ':');
         var categoryId = _categoryPredictor.PredictCategory(description);
 
         return Ok(new SmartAddPreview
         {
             Description = description,
+            Merchant = merchant,
             Amount = -amount,
             CurrencyCode = currency,
             Date = date,

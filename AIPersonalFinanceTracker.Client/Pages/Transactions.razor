@@ -38,6 +38,11 @@
             <input class="form-control" @bind="smartText" placeholder="Smart Add: Spent 450 INR on groceries at Reliance Fresh yesterday" />
             <button class="btn btn-outline-primary" @onclick="ParseSmartAdd" disabled="@string.IsNullOrWhiteSpace(smartText)">🤖 Parse</button>
         </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="receipt-upload">Receipt upload</label>
+            <InputFile id="receipt-upload" OnChange="UploadReceipt" accept=".txt,.csv,.json,image/*,application/pdf" />
+            <small class="text-muted d-block">Upload a text receipt now, or an image/PDF when an OCR provider is configured.</small>
+        </div>
         @if (smartPreview != null)
         {
             <div class="alert alert-info py-2">Parsed <strong>@smartPreview.Description</strong> as
@@ -234,6 +239,44 @@
         catch (Exception ex)
         {
             errorMessage = $"Failed to load transactions: {ex.Message}";
+        }
+    }
+
+    private async Task UploadReceipt(InputFileChangeEventArgs args)
+    {
+        errorMessage = null;
+        var file = args.File;
+        if (file is null)
+            return;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            await using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            using var streamContent = new StreamContent(stream);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            content.Add(streamContent, "file", file.Name);
+
+            var response = await Http.PostAsync("api/ocr/upload", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            var scan = await response.Content.ReadFromJsonAsync<ReceiptScanResultDto>();
+            if (scan is null)
+                return;
+
+            newDescription = scan.Description;
+            newAmount = scan.Amount;
+            transactionType = "Expense";
+            selectedCategoryId = scan.SuggestedCategoryId > 0 ? scan.SuggestedCategoryId : null;
+            successMessage = $"Receipt extracted from {scan.Merchant}. Review the fields before saving.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Receipt upload failed: {ex.Message}";
         }
     }
 

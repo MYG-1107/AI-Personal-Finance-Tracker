@@ -28,6 +28,16 @@ builder.Services.AddScoped<CategoryPredictorService>();
 builder.Services.AddScoped<AnomalyDetectionService>();
 builder.Services.AddScoped<ForecastService>();
 builder.Services.AddScoped<OcrReceiptService>();
+builder.Services.AddScoped<SubscriptionAnalyticsService>();
+builder.Services.AddScoped<FinancialAdvisorService>();
+builder.Services.AddScoped<FinancialReportService>();
+builder.Services.AddHttpClient("exchange-rates", client =>
+{
+    client.BaseAddress = new Uri("https://api.frankfurter.app/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddSingleton<ExchangeRateService>();
+builder.Services.AddHostedService<ExchangeRateRefreshService>();
 
 var app = builder.Build();
 
@@ -61,6 +71,20 @@ using (var scope = app.Services.CreateScope())
                 CurrentAmount TEXT NOT NULL,
                 TargetDate TEXT NULL,
                 Color TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS BudgetWorkspaces (
+                Id INTEGER NOT NULL CONSTRAINT PK_BudgetWorkspaces PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                OwnerEmail TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS BudgetMembers (
+                Id INTEGER NOT NULL CONSTRAINT PK_BudgetMembers PRIMARY KEY AUTOINCREMENT,
+                BudgetWorkspaceId INTEGER NOT NULL,
+                Email TEXT NOT NULL,
+                Role TEXT NOT NULL,
+                JoinedAt TEXT NOT NULL,
+                FOREIGN KEY (BudgetWorkspaceId) REFERENCES BudgetWorkspaces(Id) ON DELETE CASCADE
             );
             """);
         EnsureTransactionColumn(context, "IsRecurring", "INTEGER NOT NULL DEFAULT 0");

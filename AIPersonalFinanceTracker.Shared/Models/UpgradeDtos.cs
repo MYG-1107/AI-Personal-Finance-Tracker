@@ -18,7 +18,9 @@ public class AnomalyCheckResult
 public class ReceiptScanResultDto
 {
     public string Description { get; set; } = string.Empty;
+    public string Merchant { get; set; } = string.Empty;
     public decimal Amount { get; set; }
+    public decimal? TaxAmount { get; set; }
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public string SuggestedCategory { get; set; } = "General";
     public int SuggestedCategoryId { get; set; } = 1;
